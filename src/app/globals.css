@@ -1,0 +1,47 @@
+/* Global styles. Design tokens live in tailwind.config.ts, not here. */
+@import "tailwindcss";
+@config "../../tailwind.config.mts";
+
+@layer base {
+  html {
+    @apply bg-cream text-ink;
+  }
+
+  body {
+    @apply font-sans antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-serif font-semibold leading-tight text-ink;
+  }
+
+  a {
+    @apply text-brown underline-offset-3;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-forest;
+  }
+}
+
+/* Journey map (src/features/story-page/components/RouteMap.tsx).
+   Tiles are softened towards the cream palette; markers use the design tokens. */
+@layer components {
+  .rl-map .leaflet-tile-pane {
+    filter: grayscale(0.9) sepia(0.25) brightness(1.06) contrast(0.92);
+  }
+
+  .rl-marker {
+    @apply flex h-7 w-7 items-center justify-center rounded border-2 border-card font-sans text-xs font-semibold;
+  }
+
+  .rl-marker-stop {
+    @apply bg-forest text-card;
+  }
+
+  .rl-marker-source {
+    @apply mx-auto mt-1.5 h-4 w-4 rounded-full bg-brown;
+  }
+}

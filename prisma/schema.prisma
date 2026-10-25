@@ -1,0 +1,280 @@
+// Rootline database schema. Plain-English explanations of every table live in
+// docs/ARCHITECTURE.md; keep the two in step when changing this file.
+// Row-level security policies are plain SQL inside the migrations folder
+// (search for "ROW LEVEL SECURITY").
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A producer business. Exactly one owner (a Supabase auth user) per brand.
+/// `industry` picks the template in src/features/industries/templates.
+model Brand {
+  id           String   @id @default(uuid()) @db.Uuid
+  ownerUserId  String   @unique @map("owner_user_id") @db.Uuid
+  industry     String
+  name         String
+  location     String
+  latitude     Float?
+  longitude    Float?
+  /// Used for day boundaries in freshness lines ("Baked at 5am today").
+  timezone     String   @default("America/Vancouver")
+  /// Paths inside the "brand-media" storage bucket, not full URLs.
+  logoPath     String?  @map("logo_path")
+  photoPaths   String[] @default([]) @map("photo_paths")
+  colorPrimary String   @default("#2F4A3A") @map("color_primary")
+  colorAccent  String   @default("#8A5A3B") @map("color_accent")
+  quote        String?
+  videoUrl     String?  @map("video_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  people       BrandPerson[]
+  suppliers    Supplier[]
+  products     Product[]
+  certificates Certificate[]
+  batches      Batch[]
+  shelfCodes   ShelfCode[]
+
+  @@map("brand")
+}
+
+/// Someone shown under "Meet the maker" on the story page.
+model BrandPerson {
+  id        String   @id @default(uuid()) @db.Uuid
+  brandId   String   @map("brand_id") @db.Uuid
+  name      String
+  role      String
+  photoPath String?  @map("photo_path")
+  /// Display order, lowest first.
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+  @@map("brand_person")
+}
+
+/// A farm or supplier the brand buys from, entered once and reused on every batch.
+model Supplier {
+  id         String   @id @default(uuid()) @db.Uuid
+  brandId    String   @map("brand_id") @db.Uuid
+  name       String
+  /// One of the template's sourceTypes ids, e.g. "hop-farm".
+  sourceType String   @map("source_type")
+  /// What they supply, in the producer's words, e.g. "Pilsner malt".
+  supplies   String
+  address    String
+  latitude   Float
+  longitude  Float
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  brand        Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  certificates Certificate[]
+  lots         BatchLot[]
+
+  @@index([brandId])
+  @@map("supplier")
+}
+
+/// A product the brand makes again and again; each batch is one run of a product.
+model Product {
+  id            String   @id @default(uuid()) @db.Uuid
+  brandId       String   @map("brand_id") @db.Uuid
+  name          String
+  /// Pack format, e.g. "473 ml can" or "Sourdough loaf, 800 g".
+  format        String
+  /// In label order.
+  ingredients   String[] @default([])
+  allergens     String[] @default([])
+  dietaryTags   String[] @default([]) @map("dietary_tags")
+  /// Path in the "brand-media" bucket.
+  photoPath     String?  @map("photo_path")
+  /// Industry-specific fields, validated against the template's productFields.
+  extra         Json     @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  brand        Brand         @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  certificates Certificate[]
+  batches      Batch[]
+
+  @@index([brandId])
+  @@map("product")
+}
+
+enum CertificateStatus {
+  VALID
+  REVOKED
+}
+
+/// Proof behind a claim such as "Organic". A badge is shown only while the
+/// certificate is VALID and not past its expiry date; that is computed in
+/// src/features/certificates/service.ts and never stored as a flag.
+/// Applies to the whole brand, or to one product, or to one supplier.
+model Certificate {
+  id         String            @id @default(uuid()) @db.Uuid
+  brandId    String            @map("brand_id") @db.Uuid
+  productId  String?           @map("product_id") @db.Uuid
+  supplierId String?           @map("supplier_id") @db.Uuid
+  /// One of the template's allowedBadges ids, e.g. "b-corp".
+  claim      String
+  issuer     String
+  /// The last day the certificate is valid (inclusive).
+  expiresOn  DateTime          @map("expires_on") @db.Date
+  status     CertificateStatus @default(VALID)
+  /// Path in the private "certificates" bucket.
+  filePath   String            @map("file_path")
+  fileName   String            @map("file_name")
+  fileType   String            @map("file_type")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  brand    Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  // NoAction: a product or supplier with certificates cannot be deleted until
+  // its certificates are removed, so no claim silently changes what it covers.
+  // (NoAction rather than Restrict: Postgres checks it at the end of the
+  // statement, so deleting a whole brand still cascades cleanly.)
+  product  Product?  @relation(fields: [productId], references: [id], onDelete: NoAction)
+  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: NoAction)
+
+  @@index([brandId])
+  @@index([productId])
+  @@index([supplierId])
+  @@map("certificate")
+}
+
+enum BatchStatus {
+  DRAFT
+  LIVE
+  SOLD_OUT
+}
+
+/// One production run of a product, e.g. "Hazy Pale Ale, Brew 214".
+/// Shoppers reach it through its QR code at /b/{code}; only LIVE and
+/// SOLD_OUT batches are ever shown publicly.
+model Batch {
+  id          String      @id @default(uuid()) @db.Uuid
+  brandId     String      @map("brand_id") @db.Uuid
+  productId   String      @map("product_id") @db.Uuid
+  /// Short random code printed in the QR link. Never reused.
+  code        String      @unique
+  /// The producer's batch number, unique per product.
+  number      Int
+  status      BatchStatus @default(DRAFT)
+  /// Brewed / baked / laid / roasted / harvested (the template names it).
+  madeAt      DateTime    @map("made_at")
+  /// Canned / bottled / packed; null when the template has no packaged date.
+  packagedAt  DateTime?   @map("packaged_at")
+  /// Industry-specific fields, validated against the template's batchFields.
+  extra       Json        @default("{}")
+  publishedAt DateTime?   @map("published_at")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  brand      Brand       @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  // NoAction: a product with batches cannot be deleted (its batches' stories depend on it).
+  product    Product     @relation(fields: [productId], references: [id], onDelete: NoAction)
+  lots       BatchLot[]
+  stops      RouteStop[]
+  shelfCodes ShelfCode[]
+  scans      ScanEvent[]
+
+  @@unique([productId, number])
+  @@index([brandId, createdAt])
+  @@map("batch")
+}
+
+/// A supplier lot that went into a batch: the earliest point the brand can prove.
+model BatchLot {
+  id         String @id @default(uuid()) @db.Uuid
+  batchId    String @map("batch_id") @db.Uuid
+  supplierId String @map("supplier_id") @db.Uuid
+  /// What came from this supplier for this batch, e.g. "Pilsner malt".
+  ingredient String
+  lotNumber  String @map("lot_number")
+  position   Int    @default(0)
+
+  batch    Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  // NoAction: a supplier whose lots are on a batch cannot be deleted.
+  supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: NoAction)
+
+  @@index([batchId])
+  @@index([supplierId])
+  @@map("batch_lot")
+}
+
+/// One stop on a batch's journey (brewery, cold storage, distributor, store...).
+model RouteStop {
+  id        String    @id @default(uuid()) @db.Uuid
+  batchId   String    @map("batch_id") @db.Uuid
+  /// Order on the map, 1 first.
+  position  Int
+  name      String
+  /// One of the template's defaultStopTypes ids.
+  type      String
+  /// Address and map position may be blank on a draft (e.g. default stops on a
+  /// brand's first batch); publishing requires them (batches/service.ts).
+  address   String    @default("")
+  latitude  Float?
+  longitude Float?
+  /// The day the batch was at this stop (optional).
+  arrivedOn DateTime? @map("arrived_on") @db.Date
+  /// e.g. "Kept at 3°C".
+  note      String?
+
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@map("route_stop")
+}
+
+/// A reusable QR code for a shelf or tap (/s/{code}). The producer points it
+/// at the current batch; scanning it opens that batch's story page.
+model ShelfCode {
+  id        String   @id @default(uuid()) @db.Uuid
+  brandId   String   @map("brand_id") @db.Uuid
+  code      String   @unique
+  /// Where it hangs, e.g. "Tap 3" or "Fridge door".
+  label     String
+  batchId   String?  @map("batch_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  brand Brand  @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  // SetNull: deleting a batch leaves the shelf code in place, pointing at nothing.
+  batch Batch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  @@index([brandId])
+  @@map("shelf_code")
+}
+
+enum ScanSource {
+  BATCH
+  SHELF
+}
+
+/// One scan of a QR code (one view of a story page). Only a rough location
+/// is kept, from the hosting provider's geo headers; never an IP address.
+model ScanEvent {
+  id        String     @id @default(uuid()) @db.Uuid
+  batchId   String     @map("batch_id") @db.Uuid
+  via       ScanSource @default(BATCH)
+  scannedAt DateTime   @default(now()) @map("scanned_at")
+  country   String?
+  region    String?
+  city      String?
+
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, scannedAt])
+  @@map("scan_event")
+}

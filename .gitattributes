@@ -1,0 +1,5 @@
+# Keep LF line endings everywhere. Prisma fingerprints migration files, so
+# Windows-style line endings would make applied migrations look modified.
+* text=auto eol=lf
+*.png binary
+*.ico binary
