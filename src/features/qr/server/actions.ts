@@ -1,6 +1,7 @@
 "use server";
 // Creating shelf codes, pointing them at a batch, and deleting them.
 import { revalidatePath } from "next/cache";
+import { requireFeature } from "@/features/billing";
 import { defineOwnerAction } from "@/lib/action";
 import { tenantOf, type Owner } from "@/lib/auth";
 import { isUniqueViolation, newPublicCode } from "@/lib/codes";
@@ -20,6 +21,7 @@ export const createShelfCode = defineOwnerAction({
   action: "createShelfCode",
   input: createShelfCodeSchema,
   handler: async ({ label, batchId }, { owner }) => {
+    requireFeature(owner, "shelfCodes");
     for (let attempt = 0; ; attempt++) {
       try {
         await withTenant(tenantOf(owner), async (tx) => {
@@ -42,6 +44,7 @@ export const pointShelfCode = defineOwnerAction({
   action: "pointShelfCode",
   input: pointShelfCodeSchema,
   handler: async ({ shelfCodeId, batchId }, { owner }) => {
+    requireFeature(owner, "shelfCodes");
     await withTenant(tenantOf(owner), async (tx) => {
       await assertBatchOwned(tx, owner, batchId);
       const result = await tx.shelfCode.updateMany({

@@ -7,7 +7,8 @@ import { bakery } from "./bakery";
 import { brewery } from "./brewery";
 import { coffee } from "./coffee";
 import { poultry } from "./poultry";
+import { produce } from "./produce";
 import { winery } from "./winery";
 
 /** Order here is the order of the "What do you make?" dropdown. */
-export const TEMPLATE_FILES = [brewery, bakery, poultry, coffee, winery];
+export const TEMPLATE_FILES = [brewery, bakery, poultry, produce, coffee, winery];

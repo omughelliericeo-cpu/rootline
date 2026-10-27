@@ -2,6 +2,7 @@
 // template and the batch, or a "not found" page if it is not theirs.
 import "server-only";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { getTemplate, type IndustryTemplate } from "@/features/industries";
 import { requireOwner, type Owner } from "@/lib/auth";
 import { batchName, publishProblems } from "../service";
@@ -17,7 +18,8 @@ export type BatchPageData = {
   problems: string[];
 };
 
-export async function loadBatchPage(batchId: string): Promise<BatchPageData> {
+/** Cached per request, so the batch layout and its page share one lookup. */
+export const loadBatchPage = cache(async (batchId: string): Promise<BatchPageData> => {
   const owner = await requireOwner();
   const batch = await getBatch(owner, batchId);
   if (!batch) notFound();
@@ -29,7 +31,7 @@ export async function loadBatchPage(batchId: string): Promise<BatchPageData> {
     name: batchName(batch.productName, template.labels.batch, batch.number),
     problems: publishProblems({ lots: batch.lots, stops: batch.stops, packagedAt: batch.packagedAt, template }),
   };
-}
+});
 
 /** The three steps of "New batch", in the industry's words. */
 export function newBatchSteps(template: IndustryTemplate): string[] {

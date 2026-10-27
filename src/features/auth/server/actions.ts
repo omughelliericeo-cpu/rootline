@@ -6,8 +6,9 @@ import { createBrandForOwner, findBrandIdForOwner } from "@/features/brand";
 import { defineAction } from "@/lib/action";
 import { serverConfig } from "@/lib/config";
 import { AppError } from "@/lib/errors";
+import { getSessionUser } from "@/lib/auth";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase";
-import { logInSchema, logOutSchema, signUpSchema, type SignUpResult } from "../schema";
+import { finishSetupSchema, logInSchema, logOutSchema, signUpSchema, type SignUpResult } from "../schema";
 import { authErrorCode, isRepeatSignUp, safeNextPath } from "../service";
 
 export const signUp = defineAction({
@@ -44,6 +45,25 @@ export const signUp = defineAction({
     // With email confirmation switched off, Supabase logs the user in straight away.
     if (data.session) redirect("/dashboard");
     return { status: "check-email", email };
+  },
+});
+
+/** A logged-in account with no brand creates one, then goes to the dashboard. */
+export const finishSetup = defineAction({
+  feature: "auth",
+  action: "finishSetup",
+  input: finishSetupSchema,
+  handler: async ({ industry, brandName, location }, ctx) => {
+    const user = await getSessionUser();
+    if (!user) throw new AppError("UNAUTHENTICATED");
+    const existingBrandId = await findBrandIdForOwner(user.id);
+    if (existingBrandId) {
+      ctx.setBrandId(existingBrandId);
+    } else {
+      const brand = await createBrandForOwner({ userId: user.id, industry, name: brandName, location });
+      ctx.setBrandId(brand.id);
+    }
+    redirect("/dashboard");
   },
 });
 

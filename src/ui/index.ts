@@ -1,5 +1,6 @@
 // Design-system components. Import from "@/ui".
 export { Badge } from "./Badge";
+export { BarStrip } from "./BarStrip";
 export { Button, ButtonLink, buttonClasses } from "./Button";
 export { Card } from "./Card";
 export { CheckboxGroup } from "./CheckboxGroup";
@@ -8,8 +9,15 @@ export { cx } from "./cx";
 export { DeleteForm } from "./DeleteForm";
 export { Field, Input, Textarea } from "./Field";
 export { FormStatus } from "./FormStatus";
+export { LineIcon, type LineIconName } from "./LineIcon";
+export { Logo, LogoMark } from "./Logo";
 export { PageShell } from "./PageShell";
 export { Photo } from "./Photo";
+export { ProgressRow } from "./ProgressRow";
+export { SearchBox, matchesQuery, queryParam } from "./SearchBox";
 export { Select, type SelectOption } from "./Select";
+export { SiteHeader } from "./SiteHeader";
+export { StatNumber } from "./StatNumber";
 export { Stepper } from "./Stepper";
+export { Table, Td, Th } from "./Table";
 export { SubmitButton } from "./SubmitButton";

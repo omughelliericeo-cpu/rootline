@@ -14,6 +14,9 @@ export const signUpSchema = z.object({
   password: z.string().min(8, "Use at least 8 characters").max(72, "Use 72 characters or fewer"),
 });
 
+/** Creating the brand for a logged-in account that has none. */
+export const finishSetupSchema = signUpSchema.pick({ industry: true, brandName: true, location: true });
+
 export const logInSchema = z.object({
   email,
   password: z.string().min(1, "Enter your password"),

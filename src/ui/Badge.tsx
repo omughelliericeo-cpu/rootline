@@ -1,23 +1,24 @@
-// Small labels. "verified" is only ever used for claims backed by a valid,
-// unexpired certificate; the caller decides that, this component only draws it.
+// Small pill labels (statuses, badges). "verified" is only ever used for
+// claims backed by a valid, unexpired certificate; the caller decides that,
+// this component only draws it.
 import type { ReactNode } from "react";
 import { cx } from "./cx";
 
 type Tone = "verified" | "neutral" | "live" | "draft" | "warning";
 
 const TONE_CLASSES: Record<Tone, string> = {
-  verified: "border-forest text-forest bg-card",
-  neutral: "border-line text-muted bg-card",
-  live: "border-forest bg-forest text-card",
-  draft: "border-line text-muted bg-cream",
-  warning: "border-brown text-brown bg-card",
+  verified: "border-sage bg-sage-soft text-forest",
+  neutral: "border-line bg-card text-muted",
+  live: "border-sage bg-sage-soft text-forest",
+  draft: "border-line bg-sand text-muted",
+  warning: "border-brown/40 bg-card text-brown",
 };
 
 export function Badge({ tone = "neutral", children }: { tone?: Tone; children: ReactNode }) {
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-medium tracking-wide",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium",
         TONE_CLASSES[tone],
       )}
     >

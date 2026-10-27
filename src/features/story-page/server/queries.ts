@@ -2,6 +2,7 @@
 // row-level security only lets published batches and their story through.
 import "server-only";
 import { cache } from "react";
+import { STORY_PHOTO_LIMIT } from "@/features/shopper-photos";
 import { isPublicCode } from "@/lib/codes";
 import { withPublic } from "@/lib/db";
 import { storedDateKey } from "@/lib/dates";
@@ -18,6 +19,14 @@ export const loadStory = cache(async (code: string): Promise<RawStory | null> =>
         brand: { include: { people: { orderBy: [{ position: "asc" }, { createdAt: "asc" }] } } },
         lots: { orderBy: { position: "asc" }, include: { supplier: true } },
         stops: { orderBy: { position: "asc" } },
+        recallMessages: { orderBy: { sentAt: "desc" }, select: { subject: true, body: true, sentAt: true } },
+        // Row-level security only lets APPROVED photos through; the filter says so too.
+        shopperPhotos: {
+          where: { status: "APPROVED" },
+          orderBy: { approvedAt: "desc" },
+          take: STORY_PHOTO_LIMIT,
+          select: { photoPath: true, note: true, firstName: true },
+        },
       },
     });
     // RLS already hides drafts; the status check keeps this safe even if a policy changes.
@@ -31,7 +40,7 @@ export const loadStory = cache(async (code: string): Promise<RawStory | null> =>
       },
     });
 
-    const { product, brand, lots, stops } = batch;
+    const { product, brand, lots, stops, recallMessages, shopperPhotos } = batch;
     return {
       batch: { id: batch.id, code: batch.code, number: batch.number, status: batch.status, madeAt: batch.madeAt, packagedAt: batch.packagedAt },
       product: {
@@ -53,6 +62,7 @@ export const loadStory = cache(async (code: string): Promise<RawStory | null> =>
         colorPrimary: brand.colorPrimary,
         quote: brand.quote,
         videoUrl: brand.videoUrl,
+        billing: { plan: brand.plan, trialEndsAt: brand.trialEndsAt, subscriptionStatus: brand.subscriptionStatus, currentPeriodEnd: brand.currentPeriodEnd },
       },
       people: brand.people.map((person) => ({ name: person.name, role: person.role, photoPath: person.photoPath })),
       lots: lots.map((lot) => ({
@@ -65,6 +75,7 @@ export const loadStory = cache(async (code: string): Promise<RawStory | null> =>
           address: lot.supplier.address,
           latitude: lot.supplier.latitude,
           longitude: lot.supplier.longitude,
+          photoPath: lot.supplier.photoPath,
         },
       })),
       stops: stops.map((stop) => ({
@@ -76,6 +87,8 @@ export const loadStory = cache(async (code: string): Promise<RawStory | null> =>
         arrivedOn: stop.arrivedOn ? storedDateKey(stop.arrivedOn) : null,
         note: stop.note,
       })),
+      recalls: recallMessages,
+      shopperPhotos,
       certificates: certificates.map((certificate) => ({
         id: certificate.id,
         claim: certificate.claim,

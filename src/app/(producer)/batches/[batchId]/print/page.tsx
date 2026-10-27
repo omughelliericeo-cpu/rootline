@@ -13,7 +13,7 @@ export default async function BatchPrintPage({ params }: PageProps<"/batches/[ba
   const { template, batch, name, problems } = await loadBatchPage(batchId);
 
   return (
-    <PageShell title="Print and publish" eyebrow={name} width="narrow" description={<Link href={`/batches/${batch.id}`}>Back to the {template.labels.batch.toLowerCase()}</Link>}>
+    <PageShell nested title="Print and publish" width="narrow">
       <div className="flex flex-col gap-6">
         {batch.status === "DRAFT" && <Stepper steps={newBatchSteps(template)} current={2} />}
         <Card>

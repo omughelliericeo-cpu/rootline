@@ -6,9 +6,10 @@ import { spawnSync, spawn } from "node:child_process";
 import { rmSync } from "node:fs";
 
 const port = process.argv[2] ?? "3100";
-// GEOCODER_URL: tests must not send lookups to OpenStreetMap's public service,
-// so address search points at a port with nothing listening and fails fast.
-const env = { ...process.env, NEXT_DIST_DIR: ".next-e2e", GEOCODER_URL: "http://127.0.0.1:9/search" };
+// GEOCODER_URL=off: tests must not send lookups to OpenStreetMap's public
+// service, so address search is switched off and fails at once.
+// EMAIL_PROVIDER=log: tests never send real email; recalls are written to the logs instead.
+const env = { ...process.env, NEXT_DIST_DIR: ".next-e2e", GEOCODER_URL: "off", EMAIL_PROVIDER: "log" };
 // shell: true lets "npx" resolve on Windows as well as macOS/Linux.
 const options = { stdio: "inherit", env, shell: true };
 

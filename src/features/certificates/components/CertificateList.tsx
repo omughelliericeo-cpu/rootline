@@ -1,7 +1,8 @@
-// The brand's certificates with their current state (worked out now, never stored).
+// The certificates table: claim and issuer, what it covers, expiry, current
+// state (worked out now, never stored), and view / revoke / delete.
 import { optionLabel, type IndustryTemplate } from "@/features/industries";
 import { formatDateKey, storedDateKey } from "@/lib/dates";
-import { Badge, ButtonLink, Card } from "@/ui";
+import { Badge, ButtonLink, Card, Table, Td, Th } from "@/ui";
 import type { CertificateView } from "../server/queries";
 import { certificateState, daysUntilExpiry, stateLabel, type CertificateState } from "../service";
 import { CertificateActions } from "./CertificateActions";
@@ -36,32 +37,45 @@ export function CertificateList({ certificates, template, now, timeZone }: Certi
   }
 
   return (
-    <ul className="flex flex-col gap-4">
-      {certificates.map((certificate) => {
-        const state = certificateState(certificate, now, timeZone);
-        const claimLabel = optionLabel(template.allowedBadges, certificate.claim);
-        return (
-          <li key={certificate.id}>
-            <Card className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-xl">{claimLabel}</h2>
-                  <p className="text-sm text-muted">
-                    {certificate.issuer} · Covers {certificate.coversLabel} · Until {formatDateKey(storedDateKey(certificate.expiresOn))}
-                  </p>
-                </div>
+    <Table caption="Certificates">
+      <thead>
+        <tr>
+          <Th>Certificate</Th>
+          <Th>Covers</Th>
+          <Th>Expires</Th>
+          <Th>Status</Th>
+          <Th>
+            <span className="sr-only">Actions</span>
+          </Th>
+        </tr>
+      </thead>
+      <tbody>
+        {certificates.map((certificate) => {
+          const state = certificateState(certificate, now, timeZone);
+          const claimLabel = optionLabel(template.allowedBadges, certificate.claim);
+          return (
+            <tr key={certificate.id}>
+              <Td>
+                <p className="font-medium">{claimLabel}</p>
+                <p className="text-xs text-muted">{certificate.issuer}</p>
+              </Td>
+              <Td className="text-muted">{certificate.coversLabel}</Td>
+              <Td className="whitespace-nowrap text-muted">{formatDateKey(storedDateKey(certificate.expiresOn))}</Td>
+              <Td>
                 <Badge tone={TONES[state]}>{stateLabel(state, daysUntilExpiry(certificate, now, timeZone))}</Badge>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <a href={`/certificates/${certificate.id}/file`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-sm">
-                  View {certificate.fileName}
-                </a>
-                <CertificateActions certificateId={certificate.id} label={claimLabel} revoked={certificate.status === "REVOKED"} />
-              </div>
-            </Card>
-          </li>
-        );
-      })}
-    </ul>
+              </Td>
+              <Td>
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  <a href={`/certificates/${certificate.id}/file`} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-sm" aria-label={`View ${certificate.fileName}`}>
+                    View
+                  </a>
+                  <CertificateActions certificateId={certificate.id} label={claimLabel} revoked={certificate.status === "REVOKED"} />
+                </div>
+              </Td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </Table>
   );
 }

@@ -1,6 +1,7 @@
 // Shelf codes: reusable QR codes for taps, fridges and stalls, pointed at the
 // batch currently on sale.
 import type { Metadata } from "next";
+import { UpgradeNotice, ownerCan } from "@/features/billing";
 import { batchName, listBatches } from "@/features/batches";
 import { getTemplate } from "@/features/industries";
 import { CreateShelfCodeForm, ShelfCodeList, listShelfCodes } from "@/features/qr";
@@ -27,8 +28,14 @@ export default async function ShelfCodesPage() {
       description={`Print once and leave in place: a tap, a fridge, a market stall. When a new ${template.labels.batch.toLowerCase()} goes on sale, point the code at it here.`}
     >
       <div className="flex flex-col gap-6">
-        <CreateShelfCodeForm batchOptions={batchOptions} />
-        <ShelfCodeList shelfCodes={shelfCodes} batchOptions={batchOptions} appUrl={serverConfig().APP_URL} />
+        {ownerCan(owner, "shelfCodes") ? (
+          <CreateShelfCodeForm batchOptions={batchOptions} />
+        ) : (
+          <UpgradeNotice title="Reusable shelf codes are part of Growth">
+            Print one code for a tap, fridge or market stall and point it at whichever batch is on sale. Existing codes keep working.
+          </UpgradeNotice>
+        )}
+        <ShelfCodeList shelfCodes={shelfCodes} batchOptions={batchOptions} appUrl={serverConfig().APP_URL} batchLabel={template.labels.batch} />
       </div>
     </PageShell>
   );

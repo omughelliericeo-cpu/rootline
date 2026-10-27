@@ -2,6 +2,7 @@
 // Server actions to upload, revoke and delete certificates.
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireUnderLimit } from "@/features/billing";
 import { getTemplate, hasOption } from "@/features/industries";
 import { defineOwnerAction, type ActionContext } from "@/lib/action";
 import { tenantOf, type Owner } from "@/lib/auth";
@@ -45,7 +46,14 @@ export const uploadCertificate = defineOwnerAction({
     if (!hasOption(getTemplate(owner.industry).allowedBadges, claim)) {
       throw new ValidationError({ claim: ["Choose a claim from the list"] });
     }
-    if (daysBetweenKeys(dateKeyIn(new Date(), owner.timezone), expiresOn) < 0) throw new AppError("CERT_EXPIRED");
+    const today = dateKeyIn(new Date(), owner.timezone);
+    if (daysBetweenKeys(today, expiresOn) < 0) throw new AppError("CERT_EXPIRED");
+    // Plans limit how many certificates are active (valid and in date). Checked
+    // before the upload, so a refused certificate leaves no file behind.
+    const active = await withTenant(tenantOf(owner), (tx) =>
+      tx.certificate.count({ where: { brandId: owner.brandId, status: "VALID", expiresOn: { gte: dateFromKey(today) } } }),
+    );
+    requireUnderLimit(owner, "activeCertificates", active);
 
     const filePath = await uploadCertificateFile(owner.brandId, file);
     try {

@@ -3,6 +3,7 @@
 import { readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { industryChoices } from "../choices";
 import { getTemplate, industryOptions, isIndustryId, listTemplates } from "../registry";
 import { templateSchema } from "../template.schema";
 import { TEMPLATE_FILES } from "../templates";
@@ -38,8 +39,8 @@ describe("industry templates", () => {
     for (const ids of groups) expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("offers all five MVP industries in the sign-up dropdown, brewery first", () => {
-    expect(industryOptions().map((o) => o.label)).toEqual(["Brewery", "Bakery", "Poultry & eggs", "Coffee", "Winery"]);
+  it("offers every industry in the sign-up list, brewery first", () => {
+    expect(industryOptions().map((o) => o.label)).toEqual(["Brewery", "Bakery", "Poultry & eggs", "Fruits & vegetables", "Coffee", "Winery"]);
   });
 
   it("looks templates up by id and rejects unknown ids", () => {
@@ -74,5 +75,18 @@ describe("brewery template (polished industry)", () => {
 
   it("starts with gluten allergens", () => {
     expect(brewery.starterAllergens).toContain("Gluten (barley)");
+  });
+});
+
+describe("industryChoices (the What do you make? cards)", () => {
+  it("offers every template exactly once", () => {
+    const offered = industryChoices().flatMap((choice) => choice.templates.map((template) => template.id));
+    expect(offered.sort()).toEqual(listTemplates().map((template) => template.id).sort());
+  });
+
+  it("puts brewery and winery side by side in one card, each keeping its own words", () => {
+    const drinks = industryChoices().find((choice) => choice.id === "drinks");
+    expect(drinks?.name).toBe("Brewery & winery");
+    expect(drinks?.templates.map((template) => template.labels.batch)).toEqual(["Brew", "Bottling"]);
   });
 });

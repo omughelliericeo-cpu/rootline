@@ -4,7 +4,8 @@
 import "server-only";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import QRCode from "qrcode";
-import { STICKER_SHEET, pdfSafeText, stickerPositions } from "../service";
+import { pdfSafeText, wrapText } from "@/lib/pdf-text";
+import { STICKER_SHEET, stickerPositions } from "../service";
 
 const QR_OPTIONS = { errorCorrectionLevel: "M" as const, margin: 2, color: { dark: "#2B2A26", light: "#FFFFFF" } };
 
@@ -46,7 +47,7 @@ export async function stickerSheetPdf(url: string, text: StickerText): Promise<U
     ];
     let y = box.y + box.height - padding - 9;
     for (const line of lines) {
-      for (const wrapped of wrap(pdfSafeText(line.value), line.font, line.size, textWidth).slice(0, 2)) {
+      for (const wrapped of wrapText(pdfSafeText(line.value), line.font, line.size, textWidth).slice(0, 2)) {
         page.drawText(wrapped, { x: textX, y, size: line.size, font: line.font, color: line.color });
         y -= line.size + 2.5;
       }
@@ -54,21 +55,4 @@ export async function stickerSheetPdf(url: string, text: StickerText): Promise<U
     }
   }
   return pdf.save();
-}
-
-type Font = { widthOfTextAtSize: (text: string, size: number) => number };
-
-function wrap(text: string, font: Font, size: number, maxWidth: number): string[] {
-  const lines: string[] = [];
-  let current = "";
-  for (const word of text.split(/\s+/).filter(Boolean)) {
-    const candidate = current ? `${current} ${word}` : word;
-    if (font.widthOfTextAtSize(candidate, size) <= maxWidth || !current) current = candidate;
-    else {
-      lines.push(current);
-      current = word;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
 }

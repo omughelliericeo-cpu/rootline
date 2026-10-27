@@ -1,6 +1,6 @@
 # Suppliers feature
 
-The farms and businesses a brand buys from, each entered once: name, type (from the industry template, e.g. "Hop farm"), what they supply, address and map position. Every journey starts at a named supplier and lot (lots are recorded on batches in M3), so suppliers are the first stops on the story page map.
+The farms and businesses a brand buys from, each entered once: name, type (from the industry template, e.g. "Hop farm"), what they supply, address, map position and an optional photo. Every journey starts at a named supplier and lot (lots are recorded on batches in M3), so suppliers are the first stops on the story page map.
 
 ## Main files
 
@@ -16,12 +16,13 @@ Pages: `src/app/(producer)/suppliers/` (list, `new`, `[supplierId]`).
 
 ## Data
 
-The **`supplier`** table: `brand_id`, `name`, `source_type` (a template `sourceTypes` id), `supplies`, `address`, `latitude`, `longitude`. Row-level security limits rows to the owner's brand.
+The **`supplier`** table: `brand_id`, `name`, `source_type` (a template `sourceTypes` id), `supplies`, `address`, `latitude`, `longitude`, `photo_path` (optional; public `brand-media` bucket, under `{brandId}/supplier/`). Row-level security limits rows to the owner's brand.
 
 ## Rules
 
 - The type must be one of the brand's template `sourceTypes`. This is checked in the action, and a `ValidationError` is shown next to the field.
 - The map position is one "latitude, longitude" field. It is suggested from the address (OpenStreetMap lookup, see `src/lib/geocode.ts`) when the address box loses focus, or with "Find on map". It can also be pasted from a map app.
+- The photo is optional and uploaded by the producer (suppliers have no logins). Replacing or deleting the supplier removes the old file. JPG, PNG or WebP, up to 4 MB.
 - A supplier with certificates cannot be deleted (`IN_USE`) until those certificates are removed. Later, lots on batches will also block deletion.
 
 ## Connections

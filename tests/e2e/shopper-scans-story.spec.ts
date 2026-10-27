@@ -35,6 +35,7 @@ test.describe("shopper scans and sees the story", () => {
     await expect(page.getByText("Held at 3°C")).toBeVisible();
     await page.getByText("Pilsner malt").first().click();
     await expect(page.getByText("KF-2026-118")).toBeVisible();
+    await expect(page.getByRole("img", { name: "Kowalski Farm, Armstrong, BC" })).toBeVisible();
 
     // The verified badge opens the certificate file.
     const badge = page.getByRole("link", { name: "B Corp: verified, view the certificate" });

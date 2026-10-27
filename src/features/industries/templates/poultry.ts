@@ -4,6 +4,7 @@ import type { IndustryTemplateInput } from "../template.schema";
 export const poultry: IndustryTemplateInput = {
   id: "poultry",
   name: "Poultry & eggs",
+  description: "Eggs and poultry from your own flock.",
   labels: { place: "Farm", maker: "Farmer", product: "Product", products: "Products", batch: "Lot", batches: "Lots" },
   sourceTypes: [
     { id: "farm", label: "Farm" },
@@ -17,7 +18,7 @@ export const poultry: IndustryTemplateInput = {
     { key: "count", label: "Pack size", kind: "number", unit: "eggs" },
   ],
   batchFields: [{ key: "flockName", label: "Flock", kind: "text", hint: "Which flock laid this lot" }],
-  dates: { made: { label: "Laid" }, packaged: { label: "Graded and packed" } },
+  dates: { made: { label: "Laid", byVerb: "Collected" }, packaged: { label: "Graded and packed" } },
   freshness: { from: "madeAt", style: "daysAgo", verb: "Laid" },
   allowedBadges: [
     { id: "pasture-raised", label: "Pasture-raised" },

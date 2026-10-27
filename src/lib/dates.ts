@@ -74,3 +74,13 @@ export function zonedDate(dateKey: string, timeZone: string): Date {
 export function timeIn(instant: Date, timeZone: string): string {
   return new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(instant);
 }
+
+/** "2026-10-24" + 3 days -> "2026-10-27" (negative goes back). */
+export function addDaysToKey(key: string, days: number): string {
+  return new Date(Date.parse(`${key}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** The hour (0-23) on the wall clock in `timeZone`. */
+export function hourIn(instant: Date, timeZone: string): number {
+  return Number(new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", hourCycle: "h23" }).format(instant));
+}

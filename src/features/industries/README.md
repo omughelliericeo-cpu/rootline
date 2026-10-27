@@ -7,9 +7,11 @@ Rootline is one engine for every food and drink producer. This feature holds the
 | File | What it does |
 |---|---|
 | `template.schema.ts` | The one Zod schema every template must pass |
-| `templates/*.ts` | One file per industry: `brewery` (the polished one), `bakery`, `poultry`, `coffee`, `winery` |
+| `templates/*.ts` | One file per industry: `brewery` (the polished one), `bakery`, `poultry`, `produce` (fruits & vegetables), `coffee`, `winery` |
 | `templates/index.ts` | The list of templates (also the order of the sign-up dropdown) |
-| `registry.ts` | `getTemplate(id)`, `industryOptions()`, `industryIdSchema`. Templates are validated once when the module loads |
+| `registry.ts` | `getTemplate(id)`, `industryOptions()`, `industryIdSchema`, `industryPhotoUrl(id)`. Templates are validated once when the module loads |
+| `choices.ts` | `industryChoices()`: how industries appear as "What do you make?" cards. Brewery and winery share one card and stay separate templates |
+| `components/IndustryCards.tsx` | The photo cards: radio buttons in sign-up, links on the home page. Photos: `public/photos/industries/{id}.jpg` |
 | `service.ts` | `freshnessLabel()` ("Canned 9 days ago"), `extraFieldsSchema()` (validates `extra` JSON columns), `optionLabel()` |
 | `index.ts` | Public surface. Import from `@/features/industries` only |
 
@@ -18,7 +20,7 @@ Rootline is one engine for every food and drink producer. This feature holds the
 - `labels`: place, maker, product(s), batch(es), e.g. "Brewery / Brewer / Beer / Brew".
 - `sourceTypes`: the kinds of supplier, e.g. hop farm, maltster.
 - `productFields`, `batchFields`: industry-only fields (text, number, select or date). They are stored in the `extra` JSON column of products and batches and validated by `extraFieldsSchema()`.
-- `dates`: labels for the two shared date columns (`madeAt`, `packagedAt`). `packaged: null` hides the second date.
+- `dates`: labels for the two shared date columns (`madeAt`, `packagedAt`). `packaged: null` hides the second date. `made.byVerb` (optional) replaces the date label in the story headline when it would read wrongly next to a person: poultry says "Collected by Ana", not "Laid by Ana".
 - `freshness`: which date to count from, and the wording style:
   - `daysAgo`: "Canned 9 days ago"
   - `timeToday`: "Baked at 5am today"
@@ -26,13 +28,16 @@ Rootline is one engine for every food and drink producer. This feature holds the
 - `allowedBadges`: the only claims that may ever become badges, and only with a valid certificate.
 - `defaultStopTypes`: the journey stops a new batch starts with.
 - `ownStopType`: which of those stops is the producer's own place. On a brand's first batch it is pre-filled with the brand's name and location.
+- `name` and `description`: shown on the "What do you make?" card.
 - `starterIngredients`, `starterAllergens`, `dietaryTags`: pick-lists for products.
 
 ## Adding a new industry
 
 1. Copy an existing file in `templates/`, e.g. `cp templates/bakery.ts templates/cidery.ts`, and edit it. The `id` must match the file name.
 2. Add it to the list in `templates/index.ts`.
-3. Run `npm test`. `tests/templates.test.ts` checks every template automatically: it passes the schema, has unique ids and is registered. Add a test for anything special, such as its freshness wording.
+3. Add its card photo as `public/photos/industries/<id>.jpg` (3:2 landscape).
+4. Add a demo brand to `prisma/seed/brands-*.mts` so its story page can be seen with `npm run db:seed`.
+5. Run `npm test`. `tests/templates.test.ts` checks every template automatically: it passes the schema, has unique ids and is registered. Add a test for anything special, such as its freshness wording.
 
 No other code changes are needed. `Brand.industry` is a plain string, not a database enum, so no migration is needed either.
 

@@ -8,7 +8,7 @@ The public page shoppers see when they scan a batch's QR code: `/b/{code}`. Ther
 2. **"Brew 214 · Hazy Pale Ale"** and a headline: "Brewed by Jess in Port Moody, BC." It uses the template's made-date word, the first person's first name and the brand's location.
 3. **Freshness line** from the template ("Canned 9 days ago", "Baked at 5am today", "Vintage 2024"), and a note when the batch is sold out.
 4. **Verified badges.** Only claims backed by a currently valid certificate for the brand, this product, or a supplier whose lot went into this batch (`storyBadges`). Each badge opens its certificate.
-5. **Where it came from:** the map (`RouteMap`), then the sources (supplier lots) and the numbered stops. Each entry expands to show lot numbers, address, date and note.
+5. **Where it came from:** the map (`RouteMap`), then the sources (supplier lots) and the numbered stops. Each entry expands to show lot numbers, address, date and note, and the supplier's photo if it has one (loaded only when opened).
 6. **What went into it:** "Four ingredients. Nothing hidden.", allergens, where each ingredient came from, dietary tags.
 7. **The people behind your beer:** portraits, the quote (credited to the first person) and the video link.
 8. **Share this story** (the phone's share sheet, or copy link).
@@ -63,3 +63,7 @@ Measured on the production build with simulated mobile 4G (1.6 Mbit/s, 150 ms) a
 - Security: `npm run test:db`
 - Browser: `npx playwright test tests/e2e/shopper-scans-story.spec.ts`
 - By hand: `npm run db:seed`, then open http://localhost:3000/b/cedarpm2 on a phone-sized window.
+
+## Shopper photos
+
+Below the people section, "From people who've tried it" shows up to 12 approved shopper photos and a folded "Share your photo" form. Both come from the `shopper-photos` feature; the story loader reads only APPROVED rows (row-level security allows nothing else in public mode).

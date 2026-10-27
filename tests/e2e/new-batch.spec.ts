@@ -2,7 +2,7 @@
 // publishing, QR downloads, a quick second batch pre-filled from the first,
 // and a shelf code pointed at a batch.
 import { expect, test, type Page } from "@playwright/test";
-import { createTestProducer, deleteTestProducer, logIn, seedCatalogue, type TestProducer } from "./support/producer";
+import { createTestProducer, deleteTestProducer, goToMenu, logIn, seedCatalogue, type TestProducer } from "./support/producer";
 
 const STOPS = [
   { address: "2711 Murray St, Port Moody, BC", coordinates: "49.2838, -122.8317" },
@@ -59,10 +59,10 @@ test.describe("new batch", () => {
     await page.locator("#stop-1-note").fill("Kept at 3°C");
     await page.getByRole("button", { name: "Save journey" }).click();
     await expect(page.getByText("Journey saved.")).toBeVisible();
-    await page.getByRole("link", { name: /Back to the brew/ }).click();
+    await page.getByRole("link", { name: "Overview" }).click();
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText("Published. Shoppers who scan the code now see this batch.")).toBeVisible();
-    await expect(page.getByText("Live", { exact: true })).toBeVisible();
+    await expect(page.getByText("Live", { exact: true }).first()).toBeVisible();
 
     // QR downloads: SVG, PNG and the A4 sticker sheet.
     const batchPath = new URL(page.url()).pathname;
@@ -88,7 +88,7 @@ test.describe("new batch", () => {
     await expect(page.getByText("Hazy Pale Ale, Brew 2").first()).toBeVisible();
 
     // A shelf code for the tap, pointed at brew 1 and then moved to brew 2.
-    await page.getByRole("link", { name: "Shelf codes" }).click();
+    await goToMenu(page, "Shelf codes");
     await page.getByLabel("Where it goes").fill("Tap 3");
     await page.getByLabel("Points to (optional)").selectOption({ label: "Hazy Pale Ale, Brew 1" });
     await page.getByRole("button", { name: "Create shelf code" }).click();

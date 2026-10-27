@@ -1,6 +1,5 @@
 // Edit a batch's journey stops.
 import type { Metadata } from "next";
-import Link from "next/link";
 import { JourneyForm, loadBatchPage } from "@/features/batches";
 import { PageShell } from "@/ui";
 
@@ -8,17 +7,16 @@ export const metadata: Metadata = { title: "Journey" };
 
 export default async function BatchJourneyPage({ params }: PageProps<"/batches/[batchId]/journey">) {
   const { batchId } = await params;
-  const { template, batch, name } = await loadBatchPage(batchId);
+  const { template, batch } = await loadBatchPage(batchId);
 
   return (
-    <PageShell
+    <PageShell nested
       title="Journey"
-      eyebrow={name}
       width="narrow"
       description={
         <>
           Where this {template.labels.batch.toLowerCase()} went after it was made, in order. The supplier lots come
-          before these on the map. <Link href={`/batches/${batch.id}`}>Back to the {template.labels.batch.toLowerCase()}</Link>
+          before these on the map.
         </>
       }
     >

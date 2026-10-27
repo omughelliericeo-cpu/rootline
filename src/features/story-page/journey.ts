@@ -11,6 +11,8 @@ export type SourceView = {
   address: string;
   latitude: number;
   longitude: number;
+  /** Optional photo of the farm or supplier (storage path). */
+  photoPath: string | null;
 };
 
 export type StopView = {
@@ -27,7 +29,11 @@ export type StopView = {
 /** A point on the map. Sources are the start of the journey; stops are numbered 1, 2, 3... */
 export type MapPoint = { kind: "source" | "stop"; label: string; name: string; latitude: number; longitude: number };
 
-type Lot = { ingredient: string; lotNumber: string; supplier: { id: string; name: string; sourceType: string; address: string; latitude: number; longitude: number } };
+type Lot = {
+  ingredient: string;
+  lotNumber: string;
+  supplier: { id: string; name: string; sourceType: string; address: string; latitude: number; longitude: number; photoPath: string | null };
+};
 
 /** One entry per supplier, listing what came from them and which lots. */
 export function sourcesFrom(lots: Lot[], typeLabel: (type: string) => string): SourceView[] {
@@ -48,6 +54,7 @@ export function sourcesFrom(lots: Lot[], typeLabel: (type: string) => string): S
       address: lot.supplier.address,
       latitude: lot.supplier.latitude,
       longitude: lot.supplier.longitude,
+      photoPath: lot.supplier.photoPath,
     });
   }
   return [...bySupplier.values()];

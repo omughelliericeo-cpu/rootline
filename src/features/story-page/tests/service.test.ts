@@ -20,18 +20,21 @@ function rawStory(over: Partial<RawStory> = {}): RawStory {
       colorPrimary: "#2F4A3A",
       quote: "We drive up to Armstrong every harvest.",
       videoUrl: null,
+      billing: { plan: "GROWTH", trialEndsAt: null, subscriptionStatus: null, currentPeriodEnd: null },
     },
     people: [{ name: "Jess Ramirez", role: "Head brewer", photoPath: null }],
     lots: [
-      { ingredient: "Pilsner malt", lotNumber: "KF-118", supplier: { id: "s1", name: "Kowalski Farm", sourceType: "maltster", address: "Armstrong, BC", latitude: 50.44, longitude: -119.19 } },
-      { ingredient: "Citra hops", lotNumber: "SH-42", supplier: { id: "s2", name: "Singh Hop Farm", sourceType: "hop-farm", address: "Lillooet, BC", latitude: 50.68, longitude: -121.93 } },
-      { ingredient: "Pale malt", lotNumber: "KF-119", supplier: { id: "s1", name: "Kowalski Farm", sourceType: "maltster", address: "Armstrong, BC", latitude: 50.44, longitude: -119.19 } },
+      { ingredient: "Pilsner malt", lotNumber: "KF-118", supplier: { id: "s1", name: "Kowalski Farm", sourceType: "maltster", address: "Armstrong, BC", latitude: 50.44, longitude: -119.19, photoPath: "brand/supplier/farm.jpg" } },
+      { ingredient: "Citra hops", lotNumber: "SH-42", supplier: { id: "s2", name: "Singh Hop Farm", sourceType: "hop-farm", address: "Lillooet, BC", latitude: 50.68, longitude: -121.93, photoPath: null } },
+      { ingredient: "Pale malt", lotNumber: "KF-119", supplier: { id: "s1", name: "Kowalski Farm", sourceType: "maltster", address: "Armstrong, BC", latitude: 50.44, longitude: -119.19, photoPath: "brand/supplier/farm.jpg" } },
     ],
     stops: [
       { name: "Cedar & Tide", type: "brewery", address: "Port Moody", latitude: 49.28, longitude: -122.83, arrivedOn: "2026-10-15", note: null },
       { name: "Coquitlam cold storage", type: "cold-storage", address: "Coquitlam", latitude: 49.25, longitude: -122.8, arrivedOn: null, note: "Held at 3°C" },
     ],
     certificates: [],
+    recalls: [],
+    shopperPhotos: [],
     ...over,
   };
 }
@@ -61,12 +64,22 @@ describe("buildStory wording", () => {
     expect(buildStory(rawStory({ people: [] }), NOW).headline).toBe("Brewed in Port Moody, BC.");
   });
 
+  it("uses the template's headline verb where the date label would read wrongly", () => {
+    const eggs = rawStory();
+    eggs.brand = { ...eggs.brand, industry: "poultry" };
+    expect(buildStory(eggs, NOW).headline).toBe("Collected by Jess in Port Moody, BC.");
+  });
+
   it("shows the freshness line from the template", () => {
     expect(story.freshness).toBe("Canned 9 days ago");
   });
 
   it("falls back to the brand's first photo when the product has none", () => {
     expect(story.photoPath).toBe("brand/photo/1.jpg");
+  });
+
+  it("offers the industry's general photo for a banner when there is no photo at all", () => {
+    expect(story.fallbackPhotoUrl).toBe("/photos/industries/brewery.jpg");
   });
 
   it("attributes the quote to the first person", () => {
@@ -89,8 +102,8 @@ describe("ingredientsHeading", () => {
 });
 
 describe("storyBadges (verified claims only)", () => {
-  it("shows a brand-wide valid certificate, linked to its file", () => {
-    expect(storyBadges(rawStory({ certificates: [cert({})] }), NOW)).toEqual([{ id: "b-corp", label: "B Corp", certificateId: "c1" }]);
+  it("shows a brand-wide valid certificate, linked to its file, with who issued it", () => {
+    expect(storyBadges(rawStory({ certificates: [cert({})] }), NOW)).toEqual([{ id: "b-corp", label: "B Corp", certificateId: "c1", issuer: "B Lab" }]);
   });
 
   it("hides expired and revoked certificates", () => {
@@ -127,6 +140,10 @@ describe("journey", () => {
       ["Singh Hop Farm", ["Citra hops"], ["SH-42"]],
     ]);
     expect(story.sourcesSummary).toBe("Pilsner malt and Pale malt from Kowalski Farm, Citra hops from Singh Hop Farm");
+  });
+
+  it("keeps each supplier's optional photo", () => {
+    expect(story.sources.map((source) => source.photoPath)).toEqual(["brand/supplier/farm.jpg", null]);
   });
 
   it("numbers the stops and formats their dates", () => {

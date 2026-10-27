@@ -56,6 +56,11 @@ export async function listBatches(owner: Owner, options: { limit?: number } = {}
 }
 
 /** One batch with its lots and stops, or null if it is not this brand's. */
+/** How many of the brand's batches have this status (e.g. LIVE for the dashboard). */
+export async function countBatches(owner: Owner, status: BatchStatus): Promise<number> {
+  return withTenant(tenantOf(owner), (tx) => tx.batch.count({ where: { status } }));
+}
+
 export async function getBatch(owner: Owner, batchId: string): Promise<BatchDetail | null> {
   if (!isUuid(batchId)) return null;
   const row = await withTenant(tenantOf(owner), (tx) =>

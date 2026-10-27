@@ -1,6 +1,7 @@
 "use server";
 // Publishing a batch, marking it sold out, and taking it back offline.
 import { revalidatePath } from "next/cache";
+import { requireUnderLimit } from "@/features/billing";
 import { getTemplate } from "@/features/industries";
 import { defineOwnerAction } from "@/lib/action";
 import { tenantOf } from "@/lib/auth";
@@ -37,6 +38,8 @@ export const changeBatchStatus = defineOwnerAction({
           template: getTemplate(owner.industry),
         });
         if (problems.length > 0) throw new AppError("BATCH_NOT_READY", problems.join(" "));
+        // Plans limit how many batches are on sale at once (sold-out batches do not count).
+        requireUnderLimit(owner, "liveBatches", await tx.batch.count({ where: { brandId: owner.brandId, status: "LIVE" } }));
       }
 
       await tx.batch.update({

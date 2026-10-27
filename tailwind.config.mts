@@ -14,6 +14,9 @@ export default {
         muted: "#6E685D", // secondary text
         line: "#DDD4C3", // borders and dividers
         card: "#FFFDF8", // card surfaces
+        sand: "#EFE8DA", // producer sidebar, table headers
+        sage: "#A8B89A", // soft green accents (owner's style template)
+        "sage-soft": "#E4EADC", // highlighted nav item, status pills
         danger: "#8B2A1E", // errors and destructive actions (not in the Figma palette; see DECISIONS)
       },
       fontFamily: {

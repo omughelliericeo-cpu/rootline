@@ -2,7 +2,7 @@
 // works, and the brand profile can be edited on a phone.
 // The full "signs up and publishes a batch" journey is completed in M9.
 import { expect, test } from "@playwright/test";
-import { createTestProducer, deleteTestProducer, type TestProducer } from "./support/producer";
+import { createTestProducer, deleteTestProducer, goToMenu, logOut, type TestProducer } from "./support/producer";
 
 // A 1x1 PNG, enough to prove uploads reach storage and display again.
 const TINY_PNG = Buffer.from(
@@ -23,8 +23,8 @@ test.describe("producer account", () => {
 
   test("sign-up starts with 'What do you make?' and loads the industry's words", async ({ page }) => {
     await page.goto("/signup");
-    await page.getByLabel("What do you make?").selectOption({ label: "Brewery" });
-    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByRole("radio", { name: /Brewery/ }).check();
+    await page.getByRole("button", { name: "Next" }).click();
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Set up your brewery");
     await expect(page.getByLabel("Brewery name")).toBeVisible();
@@ -51,9 +51,9 @@ test.describe("producer account", () => {
 
     // Generous timeout: the first visit compiles the dashboard in dev mode.
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(producer.brandName);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(producer.brandName);
 
-    await page.getByRole("link", { name: "Edit brand profile" }).click();
+    await goToMenu(page, "Brand profile");
     await expect(page.getByText("Brewery profile")).toBeVisible();
 
     await page.getByLabel("Quote (optional)").fill("We brew with what grows nearby.");
@@ -78,7 +78,7 @@ test.describe("producer account", () => {
     await page.reload();
     await expect(page.getByLabel("Quote (optional)")).toHaveValue("We brew with what grows nearby.");
 
-    await page.getByRole("button", { name: "Log out" }).click();
+    await logOut(page);
     await expect(page).toHaveURL(/\/login/);
   });
 });

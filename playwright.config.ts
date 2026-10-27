@@ -15,6 +15,9 @@ const PORT = 3100;
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: false,
+  // Whole journeys upload files to Supabase and build several screens, so allow 90 s per
+  // test; each step still has its own short wait (5 s by default).
+  timeout: 90_000,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
@@ -28,6 +31,6 @@ export default defineConfig({
     command: `node scripts/e2e-server.mjs ${PORT}`,
     url: `http://localhost:${PORT}/api/health`,
     reuseExistingServer: !process.env.CI,
-    timeout: 300_000,
+    timeout: 600_000, // a clean production build can take a few minutes
   },
 });

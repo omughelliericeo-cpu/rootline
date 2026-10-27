@@ -18,6 +18,14 @@ const BUCKETS = [
     fileSizeLimit: 4 * 1024 * 1024,
     allowedMimeTypes: ["application/pdf", "image/jpeg", "image/png", "image/webp"],
   },
+  {
+    // Photos shoppers share, while they wait for the producer's approval.
+    // Private: approved photos are copied to brand-media; rejected ones are deleted.
+    name: "shopper-photos",
+    public: false,
+    fileSizeLimit: 4 * 1024 * 1024,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  },
 ];
 
 async function main() {

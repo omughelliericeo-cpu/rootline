@@ -1,4 +1,4 @@
-// File storage (Supabase Storage). Two buckets:
+// File storage (Supabase Storage). Three buckets:
 //  - "brand-media" (public): logos, photos, portraits and product photos shown
 //    on story pages. publicMediaUrl() turns a stored path into a URL.
 //  - "certificates" (private): certificate files. They are only reachable
@@ -11,13 +11,14 @@ import { supabaseAdmin } from "./supabase";
 
 export const BRAND_MEDIA_BUCKET = "brand-media";
 export const CERTIFICATES_BUCKET = "certificates";
+export const SHOPPER_PHOTOS_BUCKET = "shopper-photos";
 
 export function publicMediaUrl(path: string): string {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL ?? "";
   return `${base}/storage/v1/object/public/${BRAND_MEDIA_BUCKET}/${path}`;
 }
 
-async function upload(bucket: string, path: string, file: File, cacheControl: string): Promise<string> {
+async function upload(bucket: string, path: string, file: Blob, cacheControl: string): Promise<string> {
   const { error } = await supabaseAdmin()
     .storage.from(bucket)
     .upload(path, file, { contentType: file.type, cacheControl, upsert: false });
@@ -44,6 +45,33 @@ export async function signedCertificateUrl(path: string, seconds = 300): Promise
   const { data, error } = await supabaseAdmin().storage.from(CERTIFICATES_BUCKET).createSignedUrl(path, seconds);
   if (error || !data) throw new AppError("CERT_NOT_FOUND", undefined, { cause: error });
   return data.signedUrl;
+}
+
+/** Stores a shopper's photo (metadata already removed) in the private bucket; returns its path. */
+export async function uploadShopperPhoto(brandId: string, photo: Blob): Promise<string> {
+  const problem = checkImageFile(photo);
+  if (problem) throw new AppError("UPLOAD_INVALID", problem);
+  return upload(SHOPPER_PHOTOS_BUCKET, storagePathFor(brandId, "shopper", photo.type), photo, "3600");
+}
+
+/** A short-lived link so the producer can look at a photo waiting for approval. */
+export async function signedShopperPhotoUrl(path: string, seconds = 600): Promise<string> {
+  const { data, error } = await supabaseAdmin().storage.from(SHOPPER_PHOTOS_BUCKET).createSignedUrl(path, seconds);
+  if (error || !data) throw new AppError("SHOPPER_PHOTO_NOT_FOUND", undefined, { cause: error });
+  return data.signedUrl;
+}
+
+/** Approving: copies the photo to the public bucket under the same path; returns that path. */
+export async function publishShopperPhoto(path: string): Promise<string> {
+  const { error } = await supabaseAdmin()
+    .storage.from(SHOPPER_PHOTOS_BUCKET)
+    .copy(path, path, { destinationBucket: BRAND_MEDIA_BUCKET });
+  if (error) throw new AppError("UPLOAD_FAILED", "The photo could not be published. Please try again.", { cause: error });
+  return path;
+}
+
+export async function removeShopperPhotos(paths: string[]): Promise<void> {
+  await removeFrom(SHOPPER_PHOTOS_BUCKET, paths);
 }
 
 /** Deletes files no longer referenced. Callers log failures; they are not fatal. */

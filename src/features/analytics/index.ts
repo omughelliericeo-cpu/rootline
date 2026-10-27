@@ -1,3 +1,4 @@
-// Public surface of the analytics feature. Scan counts and charts arrive in Milestone 6.
+// Public surface of the analytics feature: recording scans and counting them.
+export { scansByDay, topBatchesByScans, totalScans, type BatchScanCount } from "./server/queries";
 export { recordScan } from "./server/record-scan";
-export { coarseLocation, scanSource, type CoarseLocation } from "./service";
+export { coarseLocation, fillDays, percentChange, scanSource, weekTotals, type CoarseLocation, type DayCount } from "./service";

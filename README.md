@@ -1,10 +1,10 @@
 # Rootline
 
-Rootline is a food and drink traceability web app. Producers (breweries first, then bakeries, egg farms, coffee roasters, wineries and more) record where each batch came from. Each batch gets a QR code. Shoppers scan it with their phone camera and see a story page: who made it, how fresh it is, verified badges, a route map from source to store, ingredients and allergens, and the people behind it.
+Rootline is a food and drink traceability web app. Producers (breweries first, then wineries, bakeries, egg farms, fruit and vegetable growers and coffee roasters) record where each batch came from. Each batch gets a QR code. Shoppers scan it with their phone camera and see a story page: who made it, how fresh it is, verified badges, a route map from source to store, ingredients and allergens, and the people behind it.
 
 **The core rule:** a claim such as "Organic" or "B Corp" only shows as a badge while a valid, unexpired certificate is on file.
 
-> Status: **Milestone 4 (public story page with map) is complete.** See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the milestone plan.
+> Status: **the MVP is complete** (Milestones 0–6, 8 and 9), plus shopper photos, social sharing and the redesigned pages. It is live at https://rootline-taupe.vercel.app. Tips (Milestone 7) are planned for later. What is still needed before paying clients is listed under [Before serving clients](#before-serving-clients).
 
 ## Run it locally (about 10 minutes)
 
@@ -29,7 +29,10 @@ psql -U postgres -d rootline -c "ALTER ROLE rootline_app WITH LOGIN PASSWORD 'ro
 # 6. Create the file storage buckets in Supabase (once per Supabase project)
 npm run storage:setup
 
-# 7. Start the app
+# 7. Load the six demo brands (optional, but recommended)
+npm run db:seed
+
+# 8. Start the app
 npm run dev
 ```
 
@@ -43,7 +46,10 @@ Then open:
 | http://localhost:3000/products, /suppliers, /certificates | Products, suppliers and certificates (after logging in) |
 | http://localhost:3000/batches/new | The 3-step New batch flow (after logging in) |
 | http://localhost:3000/shelf-codes | Reusable shelf QR codes (after logging in) |
-| http://localhost:3000/b/cedarpm2 | The demo story page (after `npm run db:seed`) |
+| http://localhost:3000/b/cedarpm2 | The main demo story page (after `npm run db:seed`; all six demos are listed below) |
+| http://localhost:3000/shopper-photos | Approve or reject photos shoppers shared (after logging in) |
+| http://localhost:3000/pricing | Public pricing page |
+| http://localhost:3000/billing | Plan & billing (after logging in) |
 | http://localhost:3000/styleguide | Design tokens and UI components (development only) |
 | http://localhost:3000/api/health | Status of the database, file storage and email provider |
 
@@ -74,10 +80,13 @@ All variables are listed in [.env.example](.env.example). Empty optional values 
 | `DIRECT_URL` | yes | Postgres connection for migrations (database owner, not pooled) |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | yes | Server-side Supabase access (storage, auth admin) |
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Browser-side Supabase auth |
-| `RESEND_API_KEY`, `EMAIL_FROM` | from M5 | Recall emails |
-| `GEOCODER_URL` | optional | Address lookup server for "Find on map". Defaults to OpenStreetMap's public Nominatim (free, max one lookup per second) |
+| `RESEND_API_KEY`, `EMAIL_FROM` | for real email | Recall emails. `EMAIL_FROM` must be on a domain verified in Resend |
+| `EMAIL_PROVIDER` | optional | `resend` (default) or `log` (emails are written to the logs, not sent: for trying recalls without Resend) |
+| `GEOCODER_URL` | optional | Address lookup server for "Find on map". Defaults to OpenStreetMap's public Nominatim (free, max one lookup per second). `off` switches lookups off |
 | `TEST_DATABASE_URL`, `TEST_APP_DATABASE_URL` | optional | Override the `rootline_test` connections used by `npm run test:db` |
 | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN` | optional | Error tracking (server / browser) |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | for online payment | Stripe subscriptions. Without them, plans still apply but can't be bought online |
+| `SALES_EMAIL` | optional | Shown on /pricing and Plan & billing for Enterprise enquiries |
 | `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` | optional | Source-map upload on Vercel builds |
 | `LOG_LEVEL` | optional | `debug`, `info` (default), `warn`, `error` or `silent` |
 
@@ -93,11 +102,49 @@ All variables are listed in [.env.example](.env.example). Empty optional values 
 | `npm run test:e2e` | Playwright browser journeys (`tests/e2e`) on a phone-sized screen. Builds the app into `.next-e2e` and serves it on port 3100, so it can run while `npm run dev` is open. First time only: `npx playwright install chromium` |
 | `npm run check` | Lint, type-check and unit tests in one go. Run it before every commit |
 | `npm run test:db` | Database tests (row-level security) against the `rootline_test` database, which must exist |
-| `npm run storage:setup` | Create or update the Supabase Storage buckets (`brand-media` public, `certificates` private) |
+| `npm run storage:setup` | Create or update the Supabase Storage buckets (`brand-media` public; `certificates` and `shopper-photos` private) |
 | `npm run db:migrate` | Create/apply migrations in development, then regenerate the Prisma client |
 | `npm run db:deploy` | Apply migrations in production |
-| `npm run db:seed` | Load the demo brewery Cedar & Tide (story page `/b/cedarpm2`; demo login `demo@cedarandtide.test` / `CedarTide-demo-2026`). Other industries follow in Milestone 9 |
+| `npm run db:seed` | Load one demo brand per industry (see [Demo brands](#demo-brands)), each with a published batch, product photo, certificates, two weeks of demo scans and two recall sign-ups. Running it again resets the demos |
+| `npm run stripe:setup` | Create the Starter and Growth products and prices in Stripe (safe to rerun) |
+| `npm run plan:set -- <email> growth` | Set a brand's plan by hand (Enterprise contracts, support) |
 | `npm run db:reset` | Drop, re-migrate and re-seed the local database (destroys local data) |
+
+## Demo brands
+
+`npm run db:seed` creates six fictional producers in real BC places. Each has a login and a published story page.
+
+| Brand | Industry | Story page | Login |
+|---|---|---|---|
+| Cedar & Tide | Brewery (main demo) | `/b/cedarpm2` | `demo@cedarandtide.test` / `CedarTide-demo-2026` |
+| Blackbird Ridge Winery | Winery | `/b/syrah2v5` | `demo@blackbirdridge.test` / `Rootline-demo-2026` |
+| Ridgeline Roasters | Coffee | `/b/kaffe247` | `demo@ridgeline.test` / `Rootline-demo-2026` |
+| Dawn Rise Bakehouse | Bakery | `/b/dawnbak3` | `demo@dawnrise.test` / `Rootline-demo-2026` |
+| Briar Creek Farm | Poultry & eggs | `/b/eggsfrm2` | `demo@briarcreek.test` / `Rootline-demo-2026` |
+| Sunfield Organics | Fruits & vegetables | `/b/harvest7` | `demo@sunfield.test` / `Rootline-demo-2026` |
+
+The brands are described in `prisma/seed/brands-drinks.mts` and `prisma/seed/brands-food.mts` and built by `prisma/seed/build.mts`. Lot numbers and certificates are samples.
+
+## Deploying
+
+The live site runs on Vercel, with a Supabase project for the database, logins and files.
+
+1. **Database changes first:** apply migrations to production as the owner: `DIRECT_URL=<production owner URL> npx prisma migrate deploy`.
+2. **Settings:** the Vercel project needs `DATABASE_URL` (the `rootline_app` role through Supabase's transaction pooler, port 6543), `APP_URL`, the four Supabase values and the email settings. `NEXT_PUBLIC_SUPABASE_ANON_KEY` must be added with `--type config`, because the Vercel CLI refuses public keys otherwise.
+3. **Deploy:** `vercel deploy --prod`. `.vercelignore` keeps `.env` and local builds out of the upload.
+4. **Check:** `/api/health` should report `ok` for the database, storage and email.
+
+## Before serving clients
+
+The MVP works; these are the remaining production steps (details in `docs/DECISIONS.md`):
+- final domain before any client prints QR codes (codes contain the address);
+- paid Vercel and Supabase plans (Vercel Hobby is non-commercial; free Supabase projects pause when idle);
+- a separate production Supabase project (development and production share one today);
+- custom SMTP for sign-up emails and a Resend account for recall emails;
+- Sentry and uptime monitoring switched on;
+- commercial map tiles and address lookup (OpenStreetMap's free services forbid heavy commercial use);
+- "Forgot password", account deletion and data download;
+- terms of service and a privacy policy.
 
 ## Where things are
 
@@ -109,4 +156,4 @@ All variables are listed in [.env.example](.env.example). Empty optional values 
 
 ## Tech stack
 
-Next.js 16 (App Router, TypeScript strict) · PostgreSQL via Supabase (database, auth, storage) · Prisma 7 · Tailwind CSS 4 · Zod · Leaflet + OpenStreetMap (from M4) · qrcode · pdf-lib · Resend · Stripe Connect (optional tips) · Sentry · Vitest + Playwright · hosted on Vercel.
+Next.js 16 (App Router, TypeScript strict) · PostgreSQL via Supabase (database, auth, storage) · Prisma 7 · Tailwind CSS 4 · Zod · Leaflet + OpenStreetMap · qrcode · pdf-lib · Resend · Stripe Connect (optional tips) · Sentry · Vitest + Playwright · hosted on Vercel.

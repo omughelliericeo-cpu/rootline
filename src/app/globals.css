@@ -45,3 +45,14 @@
     @apply mx-auto mt-1.5 h-4 w-4 rounded-full bg-brown;
   }
 }
+
+/* Gentle float for the home page's hero labels (only when the visitor allows motion). */
+@keyframes rl-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}

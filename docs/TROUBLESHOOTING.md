@@ -76,7 +76,7 @@ When `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` are set, unexpected errors go to Se
 | Upload fails with `UPLOAD_FAILED` | Bucket missing or wrong Supabase keys | `npm run storage:setup`, then check `/api/health` → storage |
 | Images do not show (broken image icon) | `NEXT_PUBLIC_SUPABASE_URL` missing at build time | Set it and rebuild: next.config.ts uses it to allow the storage host |
 | `Cannot read properties of undefined (reading 'findMany')` on a new page | The dev server was started before the latest migration, so it holds an old database client | Stop `npm run dev` and start it again after `npm run db:migrate` |
-| Pages keep reloading by themselves in `npm run dev` | Browser log forwarding was switched back on (see DECISIONS, Milestone 2) | Keep `logging.browserToTerminal: false` in next.config.ts |
+| Pages keep reloading by themselves in `npm run dev` (forms such as login never submit) | Next's dev MCP server or browser log forwarding was switched back on; each write to `.next/dev/logs/next-development.log` triggers a reload | Keep `experimental.mcpServer: false` and `logging.browserToTerminal: false` in next.config.ts, then restart `npm run dev` |
 | "This product has certificates on file" / "This supplier has certificates on file" (`IN_USE`) | Deleting would orphan certificates | Delete or move the certificates first (Certificates page) |
 | Certificate upload says it has already expired (`CERT_EXPIRED`) | The expiry date is in the past, in the brand's time zone | Upload the current certificate |
 | A badge does not show | Certificate revoked, expired, file missing, or the claim is not one of the industry's allowed badges | Check its status on the Certificates page. The rules are in src/features/certificates/README.md |
@@ -98,4 +98,29 @@ When `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` are set, unexpected errors go to Se
 | "This certificate is not available" from a badge link | It stopped being valid since the page loaded | Reload the story page |
 | Map stays grey | No JavaScript, a tile server problem, or no stop has a map position | The stop list below still works. Add map positions on the batch's Journey page |
 | `scan not recorded` warnings in logs | The scan insert failed (e.g. database busy) | The page still worked. If it happens often, check the database and the requestId in the warning |
+| "Email sending is not set up yet" (`EMAIL_NOT_CONFIGURED`) when sending a recall | No `RESEND_API_KEY` while `EMAIL_PROVIDER=resend` | Add the key, or set `EMAIL_PROVIDER=log` to try it without sending. Restart `npm run dev` after changing `.env` |
+| Recall emails only reach your own address | Resend's test sender (no verified domain) | Verify a domain in Resend and set `EMAIL_FROM` to an address on it |
+| "N could not be sent" after a recall | A Resend batch call failed | Search the logs for the reference (requestId) shown: the `email batch failed` line has the reason. The recall still shows on the story page |
+| Story page shows "Recall notice" | A recall was sent for this batch | Intended. Every visitor sees it |
+| Unsubscribe link says it is not valid | The link was cut short or mistyped | Use the full link from the email. Codes are 48 characters |
+| Dashboard shows 0 scans although shoppers scanned | Scans fall outside "the last 7 days" in the brand's time zone, or a query is missing the UTC step | Check `Brand.timezone`. Raw SQL on times must use `(col AT TIME ZONE 'UTC') AT TIME ZONE tz` (see src/features/analytics/README.md) |
+| Scan counts look too high | Every view counts, including reloads (no deduplication) | Expected for the MVP. Re-run `npm run db:seed` to reset the demo |
+| Compliance CSV shows odd characters in Excel | The file was re-saved without its byte-order mark | Download it again from the batch page |
+| A CSV cell starts with an apostrophe (') | Text beginning with = + - @ is defused so Excel will not run it as a formula | Intended. The apostrophe does not show in Excel's cell value |
+| Save or Publish feels slow after typing addresses | Before M8, automatic map lookups queued in front of saves | Fixed: lookups use `GET /api/geocode`. Check `GEOCODER_URL` is not pointing at a slow server |
+| Sharing a shopper photo fails with "could not be uploaded" | The `shopper-photos` bucket does not exist yet | Run `npm run storage:setup` |
+| A shopper photo shows sideways | It was sent without JavaScript from an old phone with an unusual orientation tag | Rare. Rootline keeps the orientation tag; ask the shopper to share it again from a current browser |
+| "This page isn't taking new photos right now" | 50 photos are waiting for review on that batch | Approve or reject some on Shopper photos |
+| Home or sign-up shows plain sand-coloured boxes | The photo files are placeholders | Save real photos under the same names (see `public/photos/README.md`) |
+| Every producer page crashes with "Cannot read properties of undefined (reading 'count')" | The dev server was started before a migration added a table, and keeps its old database client in memory | Stop `npm run dev` (also any leftover `next` process on port 3000) and start it again |
+| A browser test cannot find a menu link on a phone-sized screen | Producer links sit inside the folded "Menu" | Use `goToMenu(page, "Suppliers")` / `logOut(page)` from `tests/e2e/support/producer.ts` |
+| A replaced photo in `public/photos` still shows the old picture | Next.js's image cache in development keeps the old version | Delete `.next/dev/cache/images`, or restart `npm run dev` |
+| The story test says "Canned yesterday" instead of "Canned today" (evenings only) | Test data saved with Postgres `now()` in local time while the app reads UTC | Fixed: the e2e helper sets its session to UTC. Use the same for any raw SQL fixtures |
+| `npm run dev` says "Another next dev server is already running" | A previous dev server is still alive on port 3000, even after its terminal closed | Stop that process (the message shows its PID), then start again. An old server can also serve stale pages or errors after a migration |
+| A demo story page shows "not found" after seeding | The seed ran against a different database than the app uses | Check `DIRECT_URL` and `DATABASE_URL` point at the same database, then run `npm run db:seed` again |
+| "Something went wrong" (error code 2637629156) right after logging in | The login exists but has no brand in this database, usually because the account was created against another database that shares the same Supabase logins | Fixed: such accounts now land on "Finish setting up" (/setup) and create their brand. Long term, give production its own Supabase project |
+| "Online payment isn't set up yet" on Plan & billing | No `STRIPE_SECRET_KEY` | Add a test key to `.env`, then run `npm run stripe:setup` |
+| Paid in Stripe but the plan didn't change | The webhook isn't reaching Rootline, or `STRIPE_WEBHOOK_SECRET` is wrong | Locally run `stripe listen --forward-to localhost:3000/api/stripe/webhook` and use the secret it prints. Check the logs for "stripe webhook rejected" |
+| "The Starter plan allows 3 live batches" | The brand is on Starter (or its trial ended) | Upgrade on Plan & billing, mark a batch sold out, or `npm run plan:set` |
+| Dates in raw SQL are hours off on one machine only | A Date cast with `::timestamptz` is read in the session's time zone | Use `${date}::timestamp` (see DECISIONS) |
 | Styles look unstyled (no cream background) | Tailwind config not loaded | Check that `@config "../../tailwind.config.mts"` is in `src/app/globals.css` and restart `npm run dev` |

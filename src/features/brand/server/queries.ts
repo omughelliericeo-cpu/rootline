@@ -1,6 +1,7 @@
 // Brand reads and the sign-up insert. All queries run through withTenant, so
 // row-level security limits them to the owner's own brand.
 import "server-only";
+import { TRIAL_DAYS } from "@/features/billing";
 import type { Owner } from "@/lib/auth";
 import { withTenant } from "@/lib/db";
 import { publicMediaUrl } from "@/lib/storage";
@@ -27,7 +28,15 @@ export type BrandProfileView = {
 export async function createBrandForOwner(input: NewBrandInput): Promise<{ id: string }> {
   return withTenant({ userId: input.userId }, (tx) =>
     tx.brand.create({
-      data: { ownerUserId: input.userId, industry: input.industry, name: input.name, location: input.location },
+      data: {
+        ownerUserId: input.userId,
+        industry: input.industry,
+        name: input.name,
+        location: input.location,
+        // Every new brand starts with a free Growth trial (see the billing feature).
+        plan: "GROWTH",
+        trialEndsAt: new Date(Date.now() + TRIAL_DAYS * 86_400_000),
+      },
       select: { id: true },
     }),
   );

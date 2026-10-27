@@ -4,4 +4,4 @@ export { CreateShelfCodeForm } from "./components/ShelfCodeForms";
 export { ShelfCodeList } from "./components/ShelfCodeList";
 export { qrDownloadResponse } from "./server/download";
 export { getShelfCode, listShelfCodes, type ShelfCodeView } from "./server/shelf-codes";
-export { batchUrl, parseQrFormat, shelfUrl } from "./service";
+export { batchUrl, downloadFileName, parseQrFormat, shelfUrl } from "./service";

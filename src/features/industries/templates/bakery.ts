@@ -4,6 +4,7 @@ import type { IndustryTemplateInput } from "../template.schema";
 export const bakery: IndustryTemplateInput = {
   id: "bakery",
   name: "Bakery",
+  description: "Bread, pastries and cakes, baked fresh.",
   labels: { place: "Bakery", maker: "Baker", product: "Bake", products: "Bakes", batch: "Bake", batches: "Bakes" },
   sourceTypes: [
     { id: "flour-mill", label: "Flour mill" },

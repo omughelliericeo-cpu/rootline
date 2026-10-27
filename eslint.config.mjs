@@ -28,8 +28,8 @@ export default defineConfig([
     },
   },
   {
-    // Server folders and shared lib code may use the database.
-    files: ["src/features/*/server/**/*.{ts,tsx}", "src/lib/**/*.ts"],
+    // Server folders, shared lib code and database tests (*.db.test.ts) may use the database.
+    files: ["src/features/*/server/**/*.{ts,tsx}", "src/lib/**/*.ts", "src/**/*.db.test.ts"],
     rules: {
       "no-restricted-imports": ["error", { patterns: [featureDeepImport] }],
     },

@@ -10,7 +10,7 @@ export type SessionCookies = {
 };
 
 /** Paths that never need a session: public shopper pages and the health check. */
-const PUBLIC_PREFIXES = ["/b/", "/s/", "/api/health", "/recall/"];
+const PUBLIC_PREFIXES = ["/b/", "/s/", "/api/health", "/recall/", "/api/recall/"];
 
 export function needsSession(pathname: string): boolean {
   return !PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));

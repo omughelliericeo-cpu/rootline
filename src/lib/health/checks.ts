@@ -44,10 +44,18 @@ export async function checkStorage(): Promise<CheckResult> {
 }
 
 export async function checkEmail(): Promise<CheckResult> {
-  const { RESEND_API_KEY } = serverConfig();
+  const { RESEND_API_KEY, EMAIL_PROVIDER } = serverConfig();
+  if (EMAIL_PROVIDER === "log") return { status: "ok", message: "Log-only mode: emails are written to the logs, not sent" };
   if (!RESEND_API_KEY) return { status: "not_configured" };
   // Listing domains is a cheap authenticated call that proves the key works.
   return timed(() =>
     expectOkResponse("https://api.resend.com/domains", { Authorization: `Bearer ${RESEND_API_KEY}` }),
   );
+}
+
+export async function checkPayments(): Promise<CheckResult> {
+  const { STRIPE_SECRET_KEY } = serverConfig();
+  if (!STRIPE_SECRET_KEY) return { status: "not_configured" };
+  // Reading the account balance is a cheap authenticated call that proves the key works.
+  return timed(() => expectOkResponse("https://api.stripe.com/v1/balance", { Authorization: `Bearer ${STRIPE_SECRET_KEY}` }));
 }

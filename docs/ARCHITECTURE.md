@@ -2,6 +2,8 @@
 
 Rootline is one shared engine plus **industry templates**. Every industry uses the same features (suppliers, products, batches, journey, certificates, story page). A template only changes labels, extra fields, date names, the freshness wording, allowed badges and default journey stops.
 
+**Status:** the MVP is complete (Milestones 0–6, 8 and 9) and deployed on Vercel with a Supabase project. Tips (M7) and the private "You are here" marker are still to come. Six industries ship: brewery, winery, bakery, poultry & eggs, fruits & vegetables and coffee, each with a demo brand from `npm run db:seed`.
+
 ## Folder map
 
 ```
@@ -42,7 +44,7 @@ src/features/batches/
 | Feature | What it owns | Milestone |
 |---|---|---|
 | `auth` | Email sign-up / login, the one owner per brand | M1 |
-| `industries` | The five templates, their Zod schema and the registry | M1 |
+| `industries` | The six templates (brewery, bakery, poultry & eggs, fruits & vegetables, coffee, winery), their Zod schema and the registry; `choices.ts` groups brewery and winery into one card | M1 |
 | `brand` | Brand profile, photos, people, quote, video link | M1 |
 | `suppliers` | Farms and suppliers with location | M2 |
 | `products` | Product templates: ingredients, allergens, dietary tags | M2 |
@@ -51,10 +53,12 @@ src/features/batches/
 | `qr` | Batch codes, reusable shelf codes, PNG/SVG, A4 sticker sheet | M3 |
 | `story-page` | The public shopper page and its map | M4 |
 | `recalls` | Shopper sign-up, recall messages, unsubscribe | M5 |
+| `billing` | Plans (Starter, Growth, Enterprise), limits and features, the public pricing page, Plan & billing, Stripe Checkout, portal and webhook | extra |
+| `shopper-photos` | Photos shoppers share from story pages; producer approves, rejects or removes them (added at the owner's request) | extra |
 | `analytics` | Scan events and counts | M6 |
-| `dashboard` | Producer home: stats, expiring certificates, recent batches | M6 |
+| `dashboard` | Producer home: scans this week, recall sign-ups, scans per batch, certificates to renew, recent batches (built in M6) | M6 |
 | `tips` | Optional "Say thanks" tipping via Stripe Connect | M7 |
-| `compliance` | Per-batch CSV and PDF export | M8 |
+| `compliance` | Per-batch CSV and PDF export of product, dates, supplier lots and journey stops (built in M8) | M8 |
 
 ### Shared code in `src/lib`
 
@@ -70,25 +74,44 @@ src/features/batches/
 | `auth.ts` | `requireOwner()` for pages (redirects to /login), `getOwner()` (includes the brand's time zone), `getSessionUser()`, `tenantOf(owner)` |
 | `supabase.ts` | Supabase clients: as the logged-in user, or admin (storage, test setup) |
 | `supabase-proxy.ts` | Refreshes the login session on each request (called by `src/proxy.ts`) |
-| `storage.ts`, `storage-rules.ts` | Uploads: public images to `brand-media`, private certificate files to `certificates` (signed links only). Accepted types and sizes, file paths, public URLs |
+| `storage.ts`, `storage-rules.ts` | Uploads: public images to `brand-media`, private certificate files to `certificates` and waiting shopper photos to `shopper-photos` (signed links only). Accepted types and sizes, file paths, public URLs |
+| `image-metadata/` | Removes EXIF/GPS, XMP and text from JPEG, PNG and WebP uploads (keeps orientation); refuses files that are not the claimed type |
+| `rate-limit.ts` | In-memory "N attempts per window" limit (never stored) |
 | `media-cleanup.ts` | Removes images no longer used, and removes a fresh upload again if the save that refers to it fails |
 | `dates.ts` | Calendar-date keys ("2026-10-24") in the brand's time zone, used for expiry checks |
 | `ids.ts` | `isUuid()`, so `/products/not-an-id` shows "not found" instead of a database error |
 | (story-page) `RouteMap.tsx` | The only Leaflet file: swap it to change map providers |
 | `codes.ts` | Random 8-character public codes for QR links (no look-alike characters), and unique-clash detection |
 | `coordinates.ts` | Reading "latitude, longitude" pasted from a map app, and writing it back |
-| `geocode.ts`, `geocode-rules.ts`, `geocode-action.ts` | Address lookup for "Find on map" (OpenStreetMap Nominatim): throttled to 1 request per second, cached, results biased towards the brand's area. Used by `src/ui/MapPositionField.tsx` |
+| `email.ts` | Sending email through Resend (one email per recipient, batches of 100, idempotency keys), or log-only mode (`EMAIL_PROVIDER=log`) |
+| `geocode.ts`, `geocode-rules.ts`, `geocode-lookup.ts` (served by `GET /api/geocode`) | Address lookup for "Find on map" (OpenStreetMap Nominatim): throttled to 1 request per second, cached, results biased towards the brand's area. Used by `src/ui/MapPositionField.tsx` |
+| `pdf-text.ts` | PDF-safe text and line wrapping for pdf-lib (sticker sheets, compliance PDFs) |
 | `form.ts` | `FormData` → object (`name[]` → arrays, `extra.key` → nested), plus Zod helpers for blank inputs and checkbox lists |
 | `sentry.ts`, `sentry-options.ts` | Error reporting with feature/requestId tags; privacy settings |
 | `health/` | The checks behind `GET /api/health` |
+
+### Page layout and shared UI (owner's style template, `design/style-template.png`)
+
+- **Producer pages:** `src/app/(producer)/layout.tsx` puts the sidebar (`ProducerHeader` in the auth feature; a folding "Menu" top bar on phones, which works without JavaScript) beside the page. The current page is highlighted in `sage-soft`.
+- **Batch pages:** `src/app/(producer)/batches/[batchId]/layout.tsx` shows the batch name, its status and `BatchTabs` (Overview, Details, Lots, Journey, Print, Recall). Each page below is a `PageShell nested` section with an h2. `loadBatchPage` is cached per request, so the layout and page share one lookup.
+- **Lists:** `Table`/`Th`/`Td` (`src/ui/Table.tsx`) for batches, products, certificates and shelf codes; `SearchBox` (`?q=`, a plain GET form) with `matchesQuery` filters on the server.
+- **Pieces:** pill `Badge`, `LineIcon` (thin icons, no library), `Logo`.
+- **Colours:** `sand` (sidebar, table headers), `sage` and `sage-soft` (highlights, status pills) added to `tailwind.config.mts`.
+- **Story page:** `StoryTabs` are anchor links to The journey, Suppliers, Certifications and Recall alerts (no JavaScript). From `md` the map and the stop timeline sit side by side.
 
 ### Forms (`src/ui/useFormAction.ts`)
 
 Every producer form uses `useFormAction(serverAction)`. It returns `{ result, pending, formProps }`; spread `formProps` onto the `<form>` and pass `pending` to `SubmitButton`.
 - The form posts to the server action, so it works before JavaScript loads.
 - Unlike a plain `<form action>`, a failed save does **not** clear what the producer typed. React 19 clears forms after every action; the hook avoids that.
-- Options: `resetOnSuccess` (e.g. "Add person"), `confirmMessage` (deletes).
+- Options: `resetOnSuccess` (e.g. "Add person"), `confirmMessage` (deletes), `prepare` (changes the data first, e.g. `shrinkImageField("photo")` from `src/ui/shrinkImage.ts`).
 - `FormStatus` shows the success message, or the error with its reference (requestId). `fieldError(result, "name")` gives the message for one field.
+
+## Hosting
+
+- **Vercel** runs the app (`vercel deploy --prod`; `.vercelignore` keeps secrets out of the upload).
+- **Supabase** holds Postgres, logins and storage. The app connects as `rootline_app` through the transaction pooler (port 6543); migrations and the seed run separately as the owner over a direct connection.
+- Before paying clients: a separate production Supabase project, paid plans, a final domain, real email, monitoring and commercial maps (see the README).
 
 ## Data model
 
@@ -96,7 +119,7 @@ Tables marked **(built)** exist in `prisma/schema.prisma`. The others are the ag
 
 - **Brand** (built): a producer business. It has exactly one owner (a Supabase auth user) and an `industry`, which picks its template. It holds the profile: name, location, optional map position, time zone (for "Baked at 5am today"), logo and photo paths in storage, two brand colours, quote, and an optional video link. Every other table belongs to a brand. (Whether tips are switched on is added with the tips feature in M7.)
 - **BrandPerson** (built): a person shown under "Meet the maker": photo, name, role. Ordered by `position`. In M7 a person can be marked as a tip recipient, with their Stripe Connect account id. No bank details are ever stored.
-- **Supplier** (built): a farm or supplier the brand buys from, entered once: name, type (from the template, e.g. "Hop farm"), what it supplies, address and map position (latitude/longitude).
+- **Supplier** (built): a farm or supplier the brand buys from, entered once: name, type (from the template, e.g. "Hop farm"), what it supplies, address, map position (latitude/longitude) and an optional photo shown on the story page.
 - **Product** (built): a product the brand makes repeatedly: name, format, ingredients (in label order), allergens, dietary tags and an optional photo. Industry-specific fields (e.g. alcohol % for beer) live in the `extra` JSON column, checked against the template.
 - **Certificate** (built): an uploaded certificate file with claim name, issuer and expiry date. It attaches to the brand, one product or one supplier. A badge is shown only while the certificate is `VALID` (not revoked), has its file, and is on or before its expiry date. That is computed every time and never stored as a flag. The file sits in a private bucket. A product or supplier with certificates cannot be deleted until they are removed (`ON DELETE NO ACTION`), and a check stops one certificate covering both a product and a supplier.
 - **Batch** (built): one production run of a product, e.g. "Hazy Pale Ale, Brew 214". It has a number (unique per product), made and packaged dates, industry fields (`extra`), a status (draft, live, sold out) and a random 8-character code used in its QR link (`/b/{code}`). The public will only ever see live or sold-out batches. A product with batches cannot be deleted.
@@ -104,8 +127,8 @@ Tables marked **(built)** exist in `prisma/schema.prisma`. The others are the ag
 - **RouteStop** (built): the ordered stops on a batch's journey (farm, brewery, cold storage, distributor, store), with address, map position, date and an optional note such as storage temperature. Address and map position may be blank while the batch is a draft; publishing requires them.
 - **ShelfCode** (built): a reusable QR code for a shelf or tap (`/s/{code}`) that the producer points at the current batch. Deleting the batch leaves the shelf code pointing at nothing.
 - **ScanEvent** (built): one row per QR scan: which batch, when, via a batch or shelf code, and a rough location (country/region/city) when known. No IP address is stored. The public can add scans of published batches but never read them.
-- **RecallSubscriber**: a shopper's email for one batch, with the consent text they agreed to and an unsubscribe token. Never visible to the public.
-- **RecallMessage**: a recall message the producer sent to a batch's subscribers.
+- **RecallSubscriber** (built): a shopper's email for one batch, with the consent text they agreed to and an unsubscribe token. Never visible to the public: the public can only add one (to a published batch). Unsubscribing goes through the `recall_unsubscribe(token)` database function.
+- **RecallMessage** (built): a recall message the producer sent to a batch's subscribers, with sent and failed counts. It is also shown as a warning at the top of the batch's public story page.
 - **Tip**: a tip a shopper paid to one person for one batch: amount, platform fee, Stripe Checkout session, status.
 - **StripeEvent**: Stripe webhook events already processed, so a repeated webhook does nothing the second time.
 
@@ -139,6 +162,18 @@ Tables marked **(built)** exist in `prisma/schema.prisma`. The others are the ag
 3. A form posts to a server action defined with `defineOwnerAction`. The wrapper validates the input, loads the owner, adds `brandId` to the logs, and runs the handler.
 4. The handler's queries go through `withTenant`, so Postgres itself refuses other brands' rows.
 5. The handler calls `revalidatePath`, so the page re-renders with the saved data.
+
+### The producer dashboard (built in M6)
+1. `requireOwner()`, then `getDashboard(owner, now)`. It runs the analytics, recalls, certificates and batches queries in parallel, each through `withTenant`.
+2. Scan days are counted in SQL in the brand's time zone (stored UTC, then converted) and zero-filled in `fillDays`.
+3. The cards are server-rendered, and the bar charts are plain HTML, so no JavaScript is needed.
+
+### A recall (built in M5)
+1. A shopper ticks the consent box on the story page. `subscribeToRecalls` inserts a `recall_subscriber` in public mode (insert only, duplicates ignored).
+2. The producer sends from `/batches/{id}/recall`. `sendRecall` checks email is set up, then saves the `recall_message` (now shown on the story page).
+3. It sends one email per active subscriber through `sendEmails`, each with its own unsubscribe link and `List-Unsubscribe` headers.
+4. It updates the message with sent and failed counts.
+5. Unsubscribing runs `recall_unsubscribe(token)`, from the email's page button or a mail app's one-click POST.
 
 ### Shopper scans a QR code (built in M4)
 1. The phone camera opens `/b/{code}` (or `/s/{code}`, which looks up the shelf code and redirects with a 307 to `/b/{batchCode}?via=shelf`).

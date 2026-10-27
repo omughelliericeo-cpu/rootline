@@ -23,7 +23,7 @@ export function IngredientsSection({ story }: { story: StoryView }) {
       <Row title="Allergens">{story.allergens.length > 0 ? `Contains ${story.allergens.join(", ").toLowerCase()}` : "No allergens listed by the maker."}</Row>
       {story.sourcesSummary && <Row title="Sourced">{story.sourcesSummary}</Row>}
       {story.dietaryTags.length > 0 && <Row title="Suitable for">{story.dietaryTags.join(", ")}</Row>}
-      {story.badges.length > 0 && <Row title="Certificates">Tap any badge at the top to see its certificate.</Row>}
+      {story.badges.length > 0 && <Row title="Certificates">Each one is listed under Certifications, with a link to the certificate.</Row>}
     </section>
   );
 }

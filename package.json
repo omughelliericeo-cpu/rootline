@@ -19,7 +19,9 @@
     "db:reset": "prisma migrate reset",
     "postinstall": "prisma generate",
     "storage:setup": "tsx --env-file=.env scripts/setup-storage.ts",
-    "test:db": "vitest run --config vitest.db.config.mts"
+    "test:db": "vitest run --config vitest.db.config.mts",
+    "stripe:setup": "tsx --env-file=.env scripts/stripe-setup.ts",
+    "plan:set": "tsx --env-file=.env scripts/set-plan.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
@@ -33,6 +35,8 @@
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "resend": "^6.34.1",
+    "stripe": "^23.0.1",
     "zod": "^4.6.7"
   },
   "devDependencies": {

@@ -138,6 +138,10 @@ Each entry records a significant technical choice: what we chose, what else we c
 - **Alternatives:** plain `<form action>` with `useActionState`; controlled inputs everywhere; a form library.
 - **Why:** React 19 clears a form after every action submission, including failed ones, so one typo wiped the whole form. That would be painful on a phone. The hook fixes this in one place with no new dependency.
 
+### 2026-10-25 · Next.js dev MCP server turned off (the real cause of the dev reload loop)
+- **Choice:** `experimental.mcpServer: false` in `next.config.ts`.
+- **Why:** the loop came back in Milestone 6 (14 reloads in 12 s, so logins never submitted). Watching the files showed only `.next/dev/logs/next-development.log` changing. Next writes that file for its dev MCP endpoint, and on this Windows setup each write triggered a rebuild and full reload. Turning the endpoint off stops the file being written. The earlier `browserToTerminal` change only reduced how often it happened. Both settings stay off. Revisit when upgrading Next.js.
+
 ### 2026-10-24 · Browser console forwarding turned off in development
 - **Choice:** `logging.browserToTerminal: false` in `next.config.ts`.
 - **Why:** with forwarding on (Next 16.4.3 on Windows), every page load in `next dev` triggered a recompile and a full reload. Pages reloaded in a loop (16 times in 12 seconds were measured) and forms lost their input. Turning it off fixed it. Browser errors still reach Sentry. Revisit when upgrading Next.js.
@@ -202,6 +206,7 @@ Each entry records a significant technical choice: what we chose, what else we c
 
 ### 2026-10-25 · Map position suggested from the address (OpenStreetMap Nominatim)
 - **Choice:** the Map position field (`src/ui/MapPositionField.tsx`) looks up the typed address with OpenStreetMap's Nominatim service. It runs when the address box loses focus (only if the position is still empty) and from a "Find on map" button. It shows what it found, with a link to check it and the OpenStreetMap credit. Used for suppliers, the brand profile (now one "Map position" box instead of two) and journey stops. The lookup runs server-side, for logged-in producers only, through `src/lib/geocode.ts`.
+- **Update (Milestone 8):** the lookup moved from a server action to `GET /api/geocode`. Next.js runs a page's server actions one at a time, so throttled automatic lookups (1 per second) were delaying Save and Publish clicks queued behind them. Plain requests run alongside actions. `GEOCODER_URL=off` switches lookups off without waiting on the throttle.
 - **Bias towards the brand:** up to five matches are fetched, and the search's top-ranked match within the brand's area wins (`closestMatch`). The area is the brand's map position, or its town looked up. Plain "surrey" from a Port Moody brewery gives Surrey, BC, not Surrey, England.
 - **Policy:** at most one request per second per server, an identifying User-Agent, results cached (500 addresses), and the OpenStreetMap credit shown. Browser tests point `GEOCODER_URL` at a dead port, so they never call the public service.
 - **Supersedes:** the plan's default "no geocoding service" (Milestone 0 defaults). The product owner asked for it after trying the supplier form.
@@ -233,3 +238,181 @@ Each entry records a significant technical choice: what we chose, what else we c
 ### 2026-10-25 · Brewery demo seed brought forward
 - **Choice:** `npm run db:seed` creates Cedar & Tide (batch 214 at `/b/cedarpm2`) and a demo login now. The other industries follow in M9.
 - **Why:** the story page needs a published batch with realistic data to review.
+
+---
+
+## Changes after Milestone 4
+
+### 2026-10-25 · Optional supplier photo, uploaded by the producer
+- **Choice:** `supplier.photo_path` holds an optional image in the public `brand-media` bucket. It is shown inside the story page's tap-to-open source details.
+- **Alternatives:** upload links for suppliers themselves.
+- **Why:** shoppers should see the real farm. Suppliers have no Rootline accounts, so the producer adds the photo. The image only loads when a shopper opens that source, so it never slows the page.
+
+---
+
+## Milestone 5
+
+### 2026-10-25 · Recalls are shown on the story page as well as emailed
+- **Choice:** a sent recall is saved first and appears as a warning at the top of the batch's story page. Only then are emails sent.
+- **Why:** most people holding a recalled product never signed up. Anyone who scans it should see the warning. Saving first also means a failed email run never hides the recall.
+
+### 2026-10-25 · One email per recipient, through Resend batches, with idempotency keys
+- **Choice:** `sendEmails` sends each subscriber their own email (Resend batch API, 100 per call). The idempotency key is `recall-{messageId}-{batch}`. Sent and failed counts are stored.
+- **Alternatives:** one email with everyone in BCC; a queue and background worker.
+- **Why:** shoppers never see each other's addresses, and a retried request cannot double-send. A queue is not needed at pilot scale, and is the next step if one brand has thousands of subscribers.
+
+### 2026-10-25 · Unsubscribe through a narrow SECURITY DEFINER function
+- **Choice:** `recall_unsubscribe(token)` is the only way to change a subscriber without logging in. The page needs a button press. Mail apps' one-click unsubscribe (RFC 8058) uses a POST-only endpoint.
+- **Alternatives:** a public update policy keyed on the token; unsubscribing on GET.
+- **Why:** the function can do exactly one thing, and the public still cannot read or list subscribers. Email security scanners open links automatically, so a GET must never unsubscribe anyone.
+
+### 2026-10-25 · Log-only email mode
+- **Choice:** `EMAIL_PROVIDER=log` writes emails to the logs (addresses masked) instead of sending. Browser tests always use it. Without a Resend key in normal mode, sending is refused before anything is saved.
+- **Why:** the feature can be tried and tested without a Resend account, and a producer is never told a recall was sent when no email could go out.
+
+---
+
+## Milestone 6
+
+### 2026-10-25 · Dashboard layout from the owner's reference image, in Rootline's own style
+- **Choice:** the owner shared a fintech dashboard as a style guide and chose to use it **for the dashboard layout only**. We took its structure: a greeting with the main action, one big number with its change, a strong accent card, then chart, progress and activity cards. We kept Rootline's cream and forest palette, Playfair numbers and headings, Inter text and 4px corners. Other screens and the story page are unchanged.
+- **Alternatives:** restyle all producer screens, or the whole app (both offered; not chosen).
+- **Why:** it keeps the brief's craft look and the shopper mockup, while giving the producer home a clearer at-a-glance shape.
+
+### 2026-10-25 · Charts are plain HTML, not a chart library
+- **Choice:** `BarStrip` and `ProgressRow` draw bars with divs and inline heights or widths, plus a screen-reader table.
+- **Why:** no dependency, works without JavaScript, fast, and easy for a new developer to change.
+
+### 2026-10-25 · Scan days counted in SQL in the brand's time zone, with explicit UTC
+- **Choice:** `(scanned_at AT TIME ZONE 'UTC') AT TIME ZONE tz` for grouping, and `<js date>::timestamp` for comparisons. (Corrected 2026-10-27: comparisons first used `::timestamptz AT TIME ZONE 'UTC'`, which is only right when the database session is in UTC. See "Date parameters in raw SQL" below.)
+- **Why:** Prisma stores UTC in `timestamp without time zone`. The first version skipped the UTC step, so evening scans fell on "tomorrow" and the dashboard showed 0. A browser test caught it, and a database test now checks scans either side of midnight.
+
+---
+
+## Milestone 8
+
+### 2026-10-25 · One compliance record feeds both CSV and PDF
+- **Choice:** `buildComplianceRecord` builds the facts once, using template wording. `toCsv` and `compliancePdf` only lay them out.
+- **Why:** the two downloads can never disagree, and the rules are tested in one place.
+
+### 2026-10-25 · CSV made safe for spreadsheets
+- **Choice:** RFC 4180 quoting, a UTF-8 byte-order mark, and a leading `'` on text that starts with `= + - @`.
+- **Why:** inspectors open these files in Excel. A supplier name like `=HYPERLINK(...)` must stay text (CSV injection), and accents must display correctly.
+
+### 2026-10-25 · Browser tests: 90 s per test
+- **Choice:** Playwright's per-test limit is 90 s (each step still waits at most 5 s).
+- **Why:** full journeys upload files to Supabase and build several screens. The 30 s default failed on a busy machine although every step worked.
+
+---
+
+## Shopper photos and new home / sign-up look (owner's request, before Milestone 9)
+
+### 2026-10-26 · Shopper photos wait for the producer's approval
+- **Choice:** a "Share your photo" form on the story page, with no account. Photos wait in a private bucket and appear only after the producer approves them; rejected and removed photos are deleted, row and file. Only a first name is shown (the first word of what was typed).
+- **Why:** nothing a stranger uploads goes public unseen. Deleting instead of keeping rejected photos means storing less personal data.
+
+### 2026-10-26 · Photo metadata removed by Rootline's own code, not `sharp`
+- **Choice:** `src/lib/image-metadata` drops EXIF, XMP, comments and text chunks from JPEG, PNG and WebP by editing the file's bytes, and keeps only the orientation tag so photos are not turned sideways. It also refuses files whose bytes are not the claimed type. Phones also shrink and re-save the photo first (`src/ui/shrinkImage.ts`).
+- **Why:** EXIF can hold the GPS position of a shopper's home. Doing this without an image library needs no new dependency and leaves the pixels untouched. `sharp` would only be needed to resize on the server.
+
+### 2026-10-26 · Abuse limits without a CAPTCHA
+- **Choice:**
+  - a hidden trap field: bots that fill it in get the normal answer;
+  - 5 shares per visitor per 15 minutes, counted in memory only;
+  - at most 50 waiting photos per batch, enforced by the database;
+  - producer approval.
+- **Why:** no new dependency and nothing extra for real shoppers to solve. A CAPTCHA can be added if spam appears.
+
+### 2026-10-26 · Home, sign-up and login follow the owner's new mockup
+- **Choice:**
+  - Home: hero, four promises, industry cards that start sign-up with that industry chosen, a quote band.
+  - Sign-up and login: split screen with a tall photo.
+  - "What do you make?" became photo cards (radio buttons in a plain GET form, so it works without JavaScript).
+- **Kept from the brief:** the five industry templates, not the mockup's eight food categories (owner's choice). Links to pages that do not exist (For Shoppers, About, View all products, Contact support) were left out.
+- **Photos:** placeholders until the owner supplies photos (see `public/photos/README.md`). Each template has a one-line `description` for its card.
+
+### 2026-10-26 · Storage downloads can be cached after a delete
+- **Finding:** Supabase may still serve a file it has deleted, from cache, to anyone who downloaded it moments before. The file is gone from the bucket, and new signed links fail.
+- **Effect:** tests check the bucket's file list, not a download.
+
+### 2026-10-26 · The owner's style template applied app-wide
+- **Choice:** producer pages follow the template (`design/style-template.png`, screens 3–25):
+  - sidebar navigation with icons;
+  - tables with search for lists;
+  - tabs on every batch page;
+  - pill status badges;
+  - a four-number dashboard;
+  - stat cards on the batch overview.
+
+  The story page gets a wider desktop layout, section tabs, a stop timeline and a Certifications section listing each issuer. Unsubscribe and login use the template's card style. New colour tokens: sand, sage, sage-soft.
+- **Kept:** Rootline's fonts, 4px corners and forest green; everything still works without JavaScript (the phone menu is a `<details>` element, and the story tabs are in-page links). The template's own sample data (vegetable farms, "Alex Carter") was not copied.
+- **Story banner fallback:** every story page opens with a wide photo, as in the template. Without a product or brand photo, the industry's general photo is used, with empty alt text so screen readers do not describe a stock photo as this batch.
+- **Photos:** from Unsplash (free to use, no credit required), chosen and cropped by hand. Credits are in `public/photos/README.md`. Branded products were avoided.
+
+### 2026-10-26 · Fruits & vegetables added; brewery and winery share a card
+- **Choice:** a sixth template, `produce` (Harvest / Harvested / Packed, grower, field or block, Organic / Non-GMO / Certified Naturally Grown / Salmon-Safe badges), at the owner's request. On "What do you make?" brewery and winery share one card (`choices.ts`) but stay separate templates, so each keeps its own words.
+- **Why:** one file plus one registry line, as the template design intended; no industry if/else anywhere.
+
+---
+
+## Milestone 9
+
+### 2026-10-26 · One demo brand per industry, described as data
+- **Choice:** `npm run db:seed` builds six fictional producers in real BC places from plain descriptions (`prisma/seed/brands-*.mts`) with one builder (`prisma/seed/build.mts`): login, brand, people, suppliers, a product with the industry photo, certificates, one live batch with lots and stops, scans and recall sign-ups.
+- **Why:** every industry's words, freshness line and badges can be seen and tested on a real story page. A new industry's demo is one more description, with no new code.
+- **Note:** the industry photo doubles as the demo product photo, so story banners and shared-link previews have a picture.
+
+### 2026-10-26 · Headline verb separate from the date label
+- **Choice:** templates may set `dates.made.byVerb` for the story headline. Poultry uses "Collected by Ana", because "Laid by Ana" credits the farmer with laying the eggs.
+- **Why:** the date label ("Laid") is right for the date line but wrong next to a person's name.
+
+### 2026-10-26 · Browser-test fixtures store times in UTC
+- **Choice:** the e2e helper sets `SET TIME ZONE 'UTC'` on its database session.
+- **Why:** the app stores UTC in columns without a time zone. Raw `now()` saved the database server's local time instead, so after 5pm in Vancouver a brew canned "today" showed as "yesterday" and the story test failed.
+
+### 2026-10-26 · Deployed to Vercel with Supabase's pooler
+- **Choice:** production runs on Vercel. The app uses the restricted `rootline_app` role through Supabase's transaction pooler (port 6543); migrations and the seed use the owner's direct connection from a developer machine.
+- **Why:** serverless functions open many short connections, which the pooler handles; row-level security works unchanged because each unit of work is one transaction.
+- **Still to do before paying clients:** separate production Supabase project, paid plans, final domain, real email, monitoring and commercial maps.
+
+### 2026-10-26 · Accounts without a brand finish setting up instead of erroring
+- **Problem:** local and live share Supabase logins but not databases. An account created locally could log in on the live site, where it had no brand, and every producer page crashed with BRAND_NOT_FOUND.
+- **Choice:** `requireOwner()` sends a logged-in account without a brand to `/setup`, which asks what they make and creates the brand (`finishSetup` action). Covered by `tests/e2e/setup.spec.ts`.
+- **Root cause still open:** production needs its own Supabase project (see the README's "Before serving clients").
+
+## Plans and billing (owner's pricing matrix)
+
+### 2026-10-27 · Three tiers, enforced in one place
+- **Choice:** Starter ($35/month or $400/year), Growth ($110 or $1,200) and Enterprise (custom contract), in Canadian dollars. Prices, limits and features live in `src/features/billing/plans.ts`; features call `requireFeature`, `requireUnderLimit` or `brandCan` instead of checking plan names.
+- **Limits:**
+  - Starter has 3 live batches and 2 active certificates, and no shelf codes, recall emails or shopper photos.
+  - Going over after a downgrade deletes nothing; it only blocks adding more.
+- **Safety exception:** every plan can post a recall warning on its story pages; only the emails are a Growth feature.
+- **Owner decisions:** existing brands start on Growth; new brands get a 30-day Growth trial; Enterprise items that are not built are labelled "Coming soon"; the "USDA / EU standards" claim was removed, because Rootline's export is not certified against them.
+
+### 2026-10-27 · Stripe Checkout and the billing portal, with a webhook that re-reads Stripe
+- **Choice:**
+  - Checkout sessions for Starter and Growth (prices found by lookup key, created by `npm run stripe:setup`);
+  - Stripe's portal for changes, card, invoices and cancelling;
+  - `POST /api/stripe/webhook`, which fetches the subscription's current state from Stripe rather than trusting the event body.
+- **Why:** events can arrive late, twice or out of order; re-reading always ends in the right state. Stripe's hosted pages mean Rootline never touches card details.
+
+### 2026-10-27 · Only the webhook can change a brand's plan
+- **Choice:** the `rootline_app` role has column-level UPDATE rights on the brand table that exclude the plan and billing columns. The webhook writes them through `apply_subscription()`, a narrow `SECURITY DEFINER` function, like `recall_unsubscribe`.
+- **Why:** a bug in any producer form can never upgrade a brewery for free. A database test proves the owner cannot change their own plan.
+
+### 2026-10-27 · Date parameters in raw SQL
+- **Finding:** Prisma's driver sends a JavaScript Date as UTC wall-clock text with no zone ("2026-12-01 00:00:00"). `::timestamptz` then reads it in the session's time zone: UTC on Supabase, but America/Los_Angeles on the local database, 8 hours off.
+- **Choice:** compare with `${date}::timestamp`, which is right in every environment. Fixed in the scan analytics queries too, with a database test that fails under the old cast.
+
+---
+
+## Planned (not built yet)
+
+### 2026-10-25 · "You are here" for the scanning shopper (after Milestone 9)
+- **Request:** a shopper who scans at home, or anywhere off the planned route, should see their own spot as the last point on the journey, e.g. "12 km from where it was brewed".
+- **Choice:** a "Show where I am" button on the story page map. It uses the phone's own location prompt (`navigator.geolocation`) and draws a distinct, unnumbered "You" marker with a distance line, clearly not one of the verified stops.
+- **Privacy:** the location is worked out in the shopper's browser only. It is **never sent to Rootline or stored**, and other shoppers never see it, because a scan at home would reveal where someone lives. Producers keep the existing city-level scan counts (`scan_event`, shown on the dashboard in M6).
+- **Alternatives:** store the latest scan's location and show it to every shopper (rejected: reveals homes); an AI feature (not needed, as the phone already knows its position, and the brief puts AI features out of scope).
+- **When:** after the remaining milestones, at the product owner's request. Design notes are in the build plan.
+

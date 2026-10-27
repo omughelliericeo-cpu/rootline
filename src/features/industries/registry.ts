@@ -30,7 +30,12 @@ export function getTemplate(industryId: string): IndustryTemplate {
   return template;
 }
 
-/** Options for the "What do you make?" dropdown. */
+/** The general photo for an industry (cards, and story pages without their own photo): /photos/industries/{id}.jpg. */
+export function industryPhotoUrl(industryId: string): string {
+  return `/photos/industries/${industryId}.jpg`;
+}
+
+/** Options for an industry dropdown (e.g. the style guide). */
 export function industryOptions(): Array<{ value: string; label: string }> {
   return listTemplates().map((template) => ({ value: template.id, label: template.name }));
 }

@@ -1,10 +1,12 @@
-// The brand's suppliers, each linking to its edit page.
+// The suppliers list: photo, name and address, with the supplier type on the
+// right. Each row links to the edit page.
 import Link from "next/link";
 import { optionLabel, type IndustryTemplate } from "@/features/industries";
-import { ButtonLink, Card } from "@/ui";
+import { ButtonLink, Card, LineIcon, Photo } from "@/ui";
 import type { SupplierView } from "../server/queries";
 
-export function SupplierList({ suppliers, template }: { suppliers: SupplierView[]; template: IndustryTemplate }) {
+export function SupplierList({ suppliers, template, query }: { suppliers: SupplierView[]; template: IndustryTemplate; query?: string }) {
+  if (suppliers.length === 0 && query) return <p className="text-muted">No suppliers match “{query}”.</p>;
   if (suppliers.length === 0) {
     return (
       <Card>
@@ -18,18 +20,21 @@ export function SupplierList({ suppliers, template }: { suppliers: SupplierView[
   }
 
   return (
-    <ul className="grid gap-4 sm:grid-cols-2">
+    <ul className="divide-y divide-line overflow-hidden rounded border border-line bg-card">
       {suppliers.map((supplier) => (
         <li key={supplier.id}>
-          <Link href={`/suppliers/${supplier.id}`} className="block h-full no-underline">
-            <Card className="h-full transition-colors hover:border-ink/40">
-              <p className="mb-1 text-xs font-medium uppercase tracking-[0.14em] text-brown">
-                {optionLabel(template.sourceTypes, supplier.sourceType)}
-              </p>
-              <h2 className="mb-1 text-xl">{supplier.name}</h2>
-              <p className="text-sm text-ink">{supplier.supplies}</p>
-              <p className="mt-2 text-sm text-muted">{supplier.address}</p>
-            </Card>
+          <Link href={`/suppliers/${supplier.id}`} className="flex items-center gap-4 px-4 py-3 text-ink no-underline hover:bg-cream">
+            <span className="w-12 shrink-0">
+              {supplier.photoUrl ? <Photo src={supplier.photoUrl} alt="" aspect="square" sizes="48px" /> : <span className="block aspect-square rounded bg-sand" />}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-medium">{supplier.name}</span>
+              <span className="block truncate text-sm text-muted">
+                {supplier.supplies} · {supplier.address}
+              </span>
+            </span>
+            <span className="hidden text-sm text-muted sm:block">{optionLabel(template.sourceTypes, supplier.sourceType)}</span>
+            <LineIcon name="chevron" className="h-4 w-4 shrink-0 text-muted" />
           </Link>
         </li>
       ))}

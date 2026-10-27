@@ -9,21 +9,28 @@ type PageShellProps = {
   description?: ReactNode;
   actions?: ReactNode;
   width?: "narrow" | "wide";
+  /** Inside a layout that already has the page's h1 (e.g. batch tabs): a section with an h2. */
+  nested?: boolean;
   children: ReactNode;
 };
 
-export function PageShell({ title, eyebrow, description, actions, width = "wide", children }: PageShellProps) {
+export function PageShell({ title, eyebrow, description, actions, width = "wide", nested, children }: PageShellProps) {
+  const Wrapper = nested ? "section" : "main";
+  const Heading = nested ? "h2" : "h1";
   return (
-    <main className={cx("mx-auto w-full px-4 py-8 sm:px-6 sm:py-12", width === "narrow" ? "max-w-xl" : "max-w-5xl")}>
+    <Wrapper
+      aria-label={nested ? title : undefined}
+      className={cx(nested ? "w-full py-8" : "mx-auto w-full px-4 py-8 sm:px-6 sm:py-12", width === "narrow" ? "max-w-xl" : "max-w-5xl")}
+    >
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-2">
           {eyebrow && <p className="text-xs font-medium uppercase tracking-[0.14em] text-brown">{eyebrow}</p>}
-          <h1 className="text-3xl sm:text-4xl">{title}</h1>
+          <Heading className={nested ? "text-2xl" : "text-3xl sm:text-4xl"}>{title}</Heading>
           {description && <div className="max-w-prose text-muted">{description}</div>}
         </div>
         {actions && <div className="flex flex-wrap gap-3">{actions}</div>}
       </header>
       {children}
-    </main>
+    </Wrapper>
   );
 }

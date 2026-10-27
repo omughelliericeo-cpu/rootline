@@ -1,7 +1,6 @@
 // Sign-up. Step one asks "What do you make?"; step two (?industry=...) asks
 // for the brand and account details.
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { IndustryStep, SignUpForm } from "@/features/auth";
 import { getTemplate, isIndustryId } from "@/features/industries";
@@ -18,8 +17,9 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
 
   return (
     <PageShell
-      eyebrow={chosen ? "Step 2 of 2" : "Step 1 of 2"}
-      title={chosen ? `Set up your ${chosen.labels.place.toLowerCase()}` : "Create your Rootline account"}
+      eyebrow={chosen ? "Create your account · Step 2 of 2" : "Create your account · Step 1 of 2"}
+      title={chosen ? `Set up your ${chosen.labels.place.toLowerCase()}` : "What do you make?"}
+      description={chosen ? undefined : "Tell us what you produce so we can set up your account with the right words, dates and badges."}
       width="narrow"
     >
       {chosen ? (
@@ -27,9 +27,6 @@ export default async function SignUpPage({ searchParams }: PageProps<"/signup">)
       ) : (
         <IndustryStep error={industry ? "Choose what you make from the list" : undefined} />
       )}
-      <p className="mt-6 text-sm text-muted">
-        Already have an account? <Link href="/login">Log in</Link>
-      </p>
     </PageShell>
   );
 }

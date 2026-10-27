@@ -4,6 +4,7 @@ import type { IndustryTemplateInput } from "../template.schema";
 export const winery: IndustryTemplateInput = {
   id: "winery",
   name: "Winery",
+  description: "Wine from your own or partner vineyards.",
   labels: { place: "Winery", maker: "Winemaker", product: "Wine", products: "Wines", batch: "Bottling", batches: "Bottlings" },
   sourceTypes: [
     { id: "vineyard", label: "Vineyard" },

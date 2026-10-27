@@ -7,7 +7,8 @@
 // an address search can pick the wrong place. Without JavaScript it is a
 // plain text box for "latitude, longitude".
 import { useEffect, useRef, useState } from "react";
-import { findCoordinates } from "@/lib/geocode-action";
+import type { CoordinatesSuggestion } from "@/lib/geocode-lookup";
+import type { Result } from "@/lib/result";
 import { Button } from "./Button";
 import { Field, Input } from "./Field";
 
@@ -40,7 +41,15 @@ export function MapPositionField({ id, name, addressInputId, defaultValue = "", 
       return;
     }
     setLookup({ kind: "busy" });
-    const result = await findCoordinates({ address });
+    let result: Result<CoordinatesSuggestion>;
+    try {
+      // A plain request (GET /api/geocode), not a server action, so lookups never queue up in front of Save.
+      const response = await fetch(`/api/geocode?address=${encodeURIComponent(address)}`);
+      result = (await response.json()) as Result<CoordinatesSuggestion>;
+    } catch {
+      setLookup({ kind: "problem", message: "The map search could not be reached. Paste the map position instead." });
+      return;
+    }
     if (!result.ok) {
       setLookup({ kind: "problem", message: result.error.message });
       return;

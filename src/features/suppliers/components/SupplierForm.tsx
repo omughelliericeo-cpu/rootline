@@ -1,7 +1,8 @@
 "use client";
 // Add or edit a supplier. The source types come from the brand's template.
 import { fieldError } from "@/lib/result";
-import { Card, Field, FormStatus, Input, Select, SubmitButton, type SelectOption } from "@/ui";
+import { ACCEPTED_IMAGE_TYPES } from "@/lib/storage-rules";
+import { Card, Field, FormStatus, Input, Photo, Select, SubmitButton, type SelectOption } from "@/ui";
 import { MapPositionField } from "@/ui/MapPositionField";
 import { useFormAction } from "@/ui/useFormAction";
 import { createSupplier, updateSupplier } from "../server/actions";
@@ -38,6 +39,21 @@ export function SupplierForm({ supplier, sourceTypes }: SupplierFormProps) {
           required
           error={error("coordinates")}
         />
+        <div className="flex flex-col gap-3">
+          {supplier?.photoUrl && (
+            <div className="w-40">
+              <Photo src={supplier.photoUrl} alt={`${supplier.name}`} aspect="landscape" sizes="160px" />
+            </div>
+          )}
+          <Field
+            id="photo"
+            label={supplier?.photoUrl ? "Replace photo (optional)" : "Photo (optional)"}
+            hint="A real photo of the farm or place. Shoppers see it when they tap this source. JPG, PNG or WebP, under 4 MB."
+            error={error("photo")}
+          >
+            <Input id="photo" name="photo" type="file" accept={ACCEPTED_IMAGE_TYPES} />
+          </Field>
+        </div>
         <div className="flex flex-wrap items-center gap-4">
           <SubmitButton pending={formActionPending}>{supplier ? "Save supplier" : "Add supplier"}</SubmitButton>
           <FormStatus result={result} />

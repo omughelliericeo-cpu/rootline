@@ -21,7 +21,14 @@ const serverEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalString,
   RESEND_API_KEY: optionalString,
   EMAIL_FROM: optionalString,
+  /** "resend" sends real email; "log" only writes it to the logs (tests, local trials). */
+  EMAIL_PROVIDER: z.preprocess((value) => (value === "" ? undefined : value), z.enum(["resend", "log"]).default("resend")),
   SENTRY_DSN: optionalString,
+  /** Stripe subscriptions (optional: without them, plans still apply but can't be bought online). */
+  STRIPE_SECRET_KEY: optionalString,
+  STRIPE_WEBHOOK_SECRET: optionalString,
+  /** Shown on /pricing for Enterprise enquiries. */
+  SALES_EMAIL: optionalString,
 });
 
 export type ServerConfig = z.infer<typeof serverEnvSchema>;

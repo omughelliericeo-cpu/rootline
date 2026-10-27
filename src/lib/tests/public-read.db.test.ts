@@ -4,7 +4,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient } from "@/generated/prisma/client";
-import { db, withPublic } from "../db";
+import { db, withPublic, withTenant } from "../db";
 
 const owner = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.TEST_DATABASE_URL! }) });
 const ids = { brand: "", liveBatch: "", draftBatch: "", publishedProduct: "", hiddenProduct: "" };
@@ -101,6 +101,48 @@ describe("public story page access", () => {
     await expect(
       withPublic((tx) => tx.brandPerson.create({ data: { brandId: ids.brand, name: "Intruder", role: "None" } })),
     ).rejects.toThrow();
+  });
+
+  it("may sign shoppers up for recall alerts on a published batch only, harmlessly twice", async () => {
+    const signUp = (batchId: string, token: string) =>
+      withPublic((tx) =>
+        tx.recallSubscriber.createMany({
+          data: [{ batchId, email: "shopper@example.com", consentText: "consent", unsubscribeToken: token }],
+          skipDuplicates: true,
+        }),
+      );
+    await signUp(ids.liveBatch, "a".repeat(48));
+    await signUp(ids.liveBatch, "b".repeat(48)); // same email again: ignored, no error
+    await expect(signUp(ids.draftBatch, "c".repeat(48))).rejects.toThrow();
+    expect(await owner.recallSubscriber.count({ where: { batchId: ids.liveBatch } })).toBe(1);
+  });
+
+  it("never lets the public read recall emails, but the brand can", async () => {
+    expect(await withPublic((tx) => tx.recallSubscriber.count())).toBe(0);
+    const brandView = await withTenant({ userId: "00000000-0000-4000-8000-0000000000dd", brandId: ids.brand }, (tx) =>
+      tx.recallSubscriber.findMany({ select: { email: true } }),
+    );
+    expect(brandView).toEqual([{ email: "shopper@example.com" }]);
+  });
+
+  it("unsubscribes exactly the subscriber holding the token", async () => {
+    const run = (token: string) => db().$queryRaw<Array<{ ok: boolean }>>`SELECT recall_unsubscribe(${token}) AS ok`;
+    expect((await run("f".repeat(48)))[0]?.ok).toBe(false);
+    expect((await run("a".repeat(48)))[0]?.ok).toBe(true);
+    expect((await run("a".repeat(48)))[0]?.ok).toBe(true); // already unsubscribed: still a valid link
+    const subscriber = await owner.recallSubscriber.findFirstOrThrow({ where: { batchId: ids.liveBatch } });
+    expect(subscriber.unsubscribedAt).not.toBeNull();
+  });
+
+  it("shows recall notices for published batches only", async () => {
+    await owner.recallMessage.createMany({
+      data: [
+        { batchId: ids.liveBatch, subject: "Live recall", body: "x" },
+        { batchId: ids.draftBatch, subject: "Draft recall", body: "x" },
+      ],
+    });
+    const subjects = await withPublic((tx) => tx.recallMessage.findMany({ select: { subject: true } }));
+    expect(subjects).toEqual([{ subject: "Live recall" }]);
   });
 
   it("sees nothing at all outside public mode or a tenant", async () => {

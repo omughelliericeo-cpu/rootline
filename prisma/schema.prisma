@@ -34,12 +34,26 @@ model Brand {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  /// The plan paid for (or granted). The plan in force also depends on the
+  /// trial and subscription status: see effectivePlan() in the billing feature.
+  plan                 Plan      @default(STARTER)
+  /// While set and in the future, the brand has Growth features (new brands get 30 days).
+  trialEndsAt          DateTime? @map("trial_ends_at")
+  stripeCustomerId     String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?   @unique @map("stripe_subscription_id")
+  /// Stripe's subscription status, e.g. "active", "past_due", "canceled".
+  subscriptionStatus   String?   @map("subscription_status")
+  /// "month" or "year".
+  billingInterval      String?   @map("billing_interval")
+  currentPeriodEnd     DateTime? @map("current_period_end")
+
   people       BrandPerson[]
   suppliers    Supplier[]
   products     Product[]
   certificates Certificate[]
   batches      Batch[]
   shelfCodes   ShelfCode[]
+  shopperPhotos ShopperPhoto[]
 
   @@map("brand")
 }
@@ -74,6 +88,9 @@ model Supplier {
   address    String
   latitude   Float
   longitude  Float
+  /// Optional photo of the farm or supplier (path in the "brand-media" bucket),
+  /// shown when a shopper opens that source on the story page.
+  photoPath  String?  @map("photo_path")
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
@@ -187,6 +204,9 @@ model Batch {
   stops      RouteStop[]
   shelfCodes ShelfCode[]
   scans      ScanEvent[]
+  recallSubscribers RecallSubscriber[]
+  recallMessages    RecallMessage[]
+  shopperPhotos     ShopperPhoto[]
 
   @@unique([productId, number])
   @@index([brandId, createdAt])
@@ -277,4 +297,89 @@ model ScanEvent {
 
   @@index([batchId, scannedAt])
   @@map("scan_event")
+}
+
+/// A shopper who asked to be emailed if this batch is recalled. Never
+/// readable publicly; the brand sees counts and sends recalls to them.
+model RecallSubscriber {
+  id               String    @id @default(uuid()) @db.Uuid
+  batchId          String    @map("batch_id") @db.Uuid
+  /// Stored lower-case, so the same address cannot sign up twice for one batch.
+  email            String
+  /// The exact wording the shopper agreed to, and when.
+  consentText      String    @map("consent_text")
+  consentAt        DateTime  @default(now()) @map("consent_at")
+  /// Secret code in every email's unsubscribe link.
+  unsubscribeToken String    @unique @map("unsubscribe_token")
+  unsubscribedAt   DateTime? @map("unsubscribed_at")
+
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@unique([batchId, email])
+  @@map("recall_subscriber")
+}
+
+/// A recall message the producer sent for a batch. Also shown as a notice
+/// at the top of that batch's public story page.
+model RecallMessage {
+  id             String   @id @default(uuid()) @db.Uuid
+  batchId        String   @map("batch_id") @db.Uuid
+  subject        String
+  body           String
+  sentAt         DateTime @default(now()) @map("sent_at")
+  /// How many emails were accepted for delivery, and how many could not be sent.
+  recipientCount Int      @default(0) @map("recipient_count")
+  failedCount    Int      @default(0) @map("failed_count")
+
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId, sentAt])
+  @@map("recall_message")
+}
+
+/// PENDING: waiting for the producer, file in the private "shopper-photos" bucket.
+/// APPROVED: shown on the story page, file copied to the public "brand-media" bucket.
+/// (Rejected photos are deleted, not kept.)
+enum ShopperPhotoStatus {
+  PENDING
+  APPROVED
+}
+
+/// A photo a shopper shared from a story page. No account, email or IP is stored.
+model ShopperPhoto {
+  id          String             @id @default(uuid()) @db.Uuid
+  brandId     String             @map("brand_id") @db.Uuid
+  batchId     String             @map("batch_id") @db.Uuid
+  status      ShopperPhotoStatus @default(PENDING)
+  /// Path in "shopper-photos" while PENDING, in "brand-media" once APPROVED.
+  photoPath   String             @map("photo_path")
+  note        String?
+  firstName   String?            @map("first_name")
+  /// The exact wording the shopper agreed to, and when.
+  consentText String             @map("consent_text")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  approvedAt  DateTime?          @map("approved_at")
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  batch Batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([brandId, status, createdAt])
+  @@index([batchId, status])
+  @@map("shopper_photo")
+}
+
+/// Rootline's pricing tiers (see src/features/billing/plans.ts).
+enum Plan {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+/// Stripe webhook events already handled, so a retried event is skipped.
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now()) @map("processed_at")
+
+  @@map("stripe_event")
 }

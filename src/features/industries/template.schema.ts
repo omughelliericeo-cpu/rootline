@@ -23,8 +23,10 @@ export const fieldDefinitionSchema = z.object({
 export const templateSchema = z
   .object({
     id,
-    /** Shown in the "What do you make?" dropdown. */
+    /** Shown on the "What do you make?" cards. */
     name: label,
+    /** One line under the name on those cards, e.g. "Beer, cider and kombucha". */
+    description: z.string().min(1).max(80),
     labels: z.object({
       place: label, // "Brewery", "Bakery", "Farm"
       maker: label, // "Brewer", "Baker"
@@ -38,7 +40,12 @@ export const templateSchema = z
     batchFields: z.array(fieldDefinitionSchema),
     /** Labels for the two shared date columns; `packaged: null` hides the second date. */
     dates: z.object({
-      made: z.object({ label, includesTime: z.boolean().default(false) }),
+      made: z.object({
+        label,
+        includesTime: z.boolean().default(false),
+        /** Verb for the story headline when the date label would read wrongly with a person ("Collected by Ana", not "Laid by Ana"). */
+        byVerb: label.optional(),
+      }),
       packaged: z.object({ label }).nullable(),
     }),
     /** How the story page phrases freshness, e.g. "Canned 9 days ago". */

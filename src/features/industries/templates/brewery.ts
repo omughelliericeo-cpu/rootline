@@ -4,6 +4,7 @@ import type { IndustryTemplateInput } from "../template.schema";
 export const brewery: IndustryTemplateInput = {
   id: "brewery",
   name: "Brewery",
+  description: "Beer, cider and kombucha, brewed in small batches.",
   labels: { place: "Brewery", maker: "Brewer", product: "Beer", products: "Beers", batch: "Brew", batches: "Brews" },
   sourceTypes: [
     { id: "maltster", label: "Maltster or grain farm" },

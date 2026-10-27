@@ -30,6 +30,18 @@ export const ERROR_MESSAGES = {
   BATCH_STATUS_INVALID: "That status change is not possible from the batch's current status.",
   BATCH_NOT_READY: "This batch is not ready to publish yet.",
   SHELF_CODE_NOT_FOUND: "That shelf code is no longer in your list.",
+  // recalls and email
+  EMAIL_NOT_CONFIGURED: "Email sending is not set up yet (no Resend API key). Add RESEND_API_KEY to send recall emails.",
+  RECALL_CONFIRM_REQUIRED: "Tick the box to confirm you want to email everyone signed up for this batch.",
+  // plans and billing
+  PLAN_FEATURE: "That isn't part of your plan. See Plan & billing to upgrade.",
+  PLAN_LIMIT: "You've reached your plan's limit. See Plan & billing to upgrade.",
+  BILLING_NOT_CONFIGURED: "Online payment isn't set up yet. Please contact Rootline to change your plan.",
+  BILLING_FAILED: "We couldn't reach the payment service. Please try again in a minute.",
+  // shopper photos
+  SHOPPER_PHOTO_NOT_FOUND: "That photo is no longer waiting for review.",
+  SHOPPER_PHOTO_RATE_LIMITED: "You've shared a few photos already. Please wait a little while before sharing another.",
+  SHOPPER_PHOTO_INBOX_FULL: "This page isn't taking new photos right now. Please try again in a few days.",
   // address lookup
   GEOCODE_NOT_FOUND: "We could not find that address on the map. Add the town and province, or paste the map position.",
   GEOCODE_UNAVAILABLE: "The map search is not answering right now. Paste the map position instead, or try again in a minute.",

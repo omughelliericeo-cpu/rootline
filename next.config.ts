@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
     remotePatterns: supabaseUrl ? [new URL(`${supabaseUrl}/storage/v1/object/public/**`)] : [],
   },
   experimental: {
+    // Off on purpose. Next 16's dev-only MCP endpoint (for AI coding tools)
+    // writes every log line to .next/dev/logs/next-development.log. On this
+    // Windows setup the dev watcher reacts to that file, so each write
+    // triggered a rebuild and full page reload: pages reloaded in a loop and
+    // forms (e.g. login) never submitted. Rootline does not use the endpoint.
+    mcpServer: false,
     serverActions: {
       // Photo uploads go through server actions: 4 MB images plus form overhead.
       // (Vercel itself caps request bodies at 4.5 MB.)

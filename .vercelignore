@@ -1,0 +1,12 @@
+# Never upload secrets or local build output to Vercel (settings live in the
+# Vercel project's Environment Variables instead).
+.env
+.env.*
+!.env.example
+.next
+.next-e2e
+node_modules
+test-results
+playwright-report
+design
+*.tmp.*

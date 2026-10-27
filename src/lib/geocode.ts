@@ -3,7 +3,8 @@
 // Nominatim's usage policy (https://operations.osmfoundation.org/policies/nominatim/)
 // asks for: at most one request per second, an identifying User-Agent,
 // caching of results, and credit to OpenStreetMap. All four are done here
-// and in the UI. Set GEOCODER_URL to use another Nominatim-compatible server.
+// and in the UI. Set GEOCODER_URL to use another Nominatim-compatible server,
+// or GEOCODER_URL=off to switch lookups off (the browser tests do this).
 import "server-only";
 import { serverConfig } from "./config";
 import { normaliseAddress, parseNominatim, type GeocodeMatch } from "./geocode-rules";
@@ -31,6 +32,8 @@ function throttled<T>(work: () => Promise<T>): Promise<T> {
 
 /** Up to five places matching the address, best first (as ranked by the search). */
 export async function geocodeCandidates(address: string): Promise<GeocodeMatch[]> {
+  // Fail at once, without waiting on the throttle, when lookups are switched off.
+  if (process.env.GEOCODER_URL === "off") throw new Error("Address lookup is switched off (GEOCODER_URL=off)");
   const key = normaliseAddress(address);
   const cached = cache.get(key);
   if (cached) return cached;

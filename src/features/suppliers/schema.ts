@@ -1,7 +1,7 @@
 // Zod schemas for supplier forms. The source type is checked against the
 // brand's industry template in the server action.
 import { z } from "zod";
-import { requiredText } from "@/lib/form";
+import { optionalFile, requiredText } from "@/lib/form";
 import { parseCoordinates } from "./service";
 
 export const supplierSchema = z.object({
@@ -19,6 +19,8 @@ export const supplierSchema = z.object({
       }
       return parsed;
     }),
+  /** Optional photo of the farm or supplier; uploading a new one replaces the old. */
+  photo: optionalFile,
 });
 
 export const updateSupplierSchema = supplierSchema.extend({ supplierId: z.uuid() });

@@ -1,6 +1,5 @@
 // Producer login.
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogInForm, safeNextPath } from "@/features/auth";
 import { getSessionUser } from "@/lib/auth";
@@ -20,7 +19,7 @@ export default async function LogInPage({ searchParams }: PageProps<"/login">) {
   const notice = typeof error === "string" ? NOTICES[error] : undefined;
 
   return (
-    <PageShell title="Log in" width="narrow">
+    <PageShell title="Welcome back" description="Log in to your producer account." width="narrow">
       {notice && (
         <Card className="mb-6 border-brown">
           <p role="alert" className="text-sm">
@@ -29,9 +28,6 @@ export default async function LogInPage({ searchParams }: PageProps<"/login">) {
         </Card>
       )}
       <LogInForm next={nextPath} />
-      <p className="mt-6 text-sm text-muted">
-        New to Rootline? <Link href="/signup">Create an account</Link>
-      </p>
     </PageShell>
   );
 }

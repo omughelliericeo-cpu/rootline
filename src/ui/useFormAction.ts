@@ -9,7 +9,7 @@
 //
 //   const { result, pending, formProps } = useFormAction(saveThing, { resetOnSuccess: true });
 //   <form {...formProps}> ... <SubmitButton pending={pending}>Save</SubmitButton>
-import { startTransition, useActionState, useEffect, useRef, type FormEvent } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent } from "react";
 import type { Result } from "@/lib/result";
 
 type Options = {
@@ -17,13 +17,17 @@ type Options = {
   resetOnSuccess?: boolean;
   /** Ask before submitting (e.g. deletes). Skipped when JavaScript is off. */
   confirmMessage?: string;
+  /** Changes the data before it is sent (e.g. shrinking a photo). Skipped when JavaScript is off. */
+  prepare?: (data: FormData) => Promise<FormData>;
 };
 
 export function useFormAction<T>(
   action: (previousState: unknown, form: FormData) => Promise<Result<T>>,
-  { resetOnSuccess = false, confirmMessage }: Options = {},
+  { resetOnSuccess = false, confirmMessage, prepare }: Options = {},
 ) {
-  const [result, formAction, pending] = useActionState<Result<T> | null, FormData>(action, null);
+  const [result, formAction, actionPending] = useActionState<Result<T> | null, FormData>(action, null);
+  const [preparing, setPreparing] = useState(false);
+  const pending = actionPending || preparing;
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -35,7 +39,14 @@ export function useFormAction<T>(
     if (confirmMessage && !window.confirm(confirmMessage)) return;
     const submitter = (event.nativeEvent as SubmitEvent).submitter;
     const data = new FormData(event.currentTarget, submitter);
-    startTransition(() => formAction(data));
+    if (!prepare) {
+      startTransition(() => formAction(data));
+      return;
+    }
+    setPreparing(true);
+    prepare(data)
+      .then((prepared) => startTransition(() => formAction(prepared)))
+      .finally(() => setPreparing(false));
   }
 
   return { result, pending, formProps: { ref: formRef, action: formAction, onSubmit } };

@@ -57,6 +57,7 @@ beforeAll(async () => {
     })
   ).id;
   await owner.shelfCode.create({ data: { brandId: brandB, code: "c3d4e5f6", label: "Counter", batchId: batchB } });
+  await owner.scanEvent.createMany({ data: [{ batchId: batchB }, { batchId: batchB }] });
 });
 
 afterAll(async () => {
@@ -160,8 +161,9 @@ describe("row-level security", () => {
       lots: await tx.batchLot.count(),
       stops: await tx.routeStop.count(),
       shelfCodes: await tx.shelfCode.count(),
+      scans: await tx.scanEvent.count(),
     }));
-    expect(seen).toEqual({ batches: 0, lots: 0, stops: 0, shelfCodes: 0 });
+    expect(seen).toEqual({ batches: 0, lots: 0, stops: 0, shelfCodes: 0, scans: 0 });
   });
 
   it("sees its own batch with its lots and stops", async () => {
@@ -170,8 +172,9 @@ describe("row-level security", () => {
       lots: await tx.batchLot.count(),
       stops: await tx.routeStop.count(),
       shelfCodes: await tx.shelfCode.count(),
+      scans: await tx.scanEvent.count(),
     }));
-    expect(seen).toEqual({ batches: 1, lots: 1, stops: 1, shelfCodes: 1 });
+    expect(seen).toEqual({ batches: 1, lots: 1, stops: 1, shelfCodes: 1, scans: 2 });
   });
 
   it("blocks adding a stop to another brand's batch", async () => {

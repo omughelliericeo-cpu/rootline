@@ -20,7 +20,7 @@ const CERTIFICATE_EXTENSIONS: Record<string, string> = {
 export const ACCEPTED_IMAGE_TYPES = Object.keys(IMAGE_EXTENSIONS).join(",");
 export const ACCEPTED_CERTIFICATE_TYPES = Object.keys(CERTIFICATE_EXTENSIONS).join(",");
 
-export type MediaKind = "logo" | "photo" | "person" | "product" | "certificate";
+export type MediaKind = "logo" | "photo" | "person" | "product" | "supplier" | "shopper" | "certificate";
 
 type FileInfo = { type: string; size: number };
 

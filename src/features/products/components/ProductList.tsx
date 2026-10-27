@@ -1,11 +1,13 @@
-// The brand's products, each linking to its edit page.
+// The products table: photo and name (links to the edit page), format and allergens.
 import Link from "next/link";
 import type { IndustryTemplate } from "@/features/industries";
-import { ButtonLink, Card, Photo } from "@/ui";
+import { ButtonLink, Card, Photo, Table, Td, Th } from "@/ui";
 import type { ProductView } from "../server/queries";
 
-export function ProductList({ products, template }: { products: ProductView[]; template: IndustryTemplate }) {
+export function ProductList({ products, template, query }: { products: ProductView[]; template: IndustryTemplate; query?: string }) {
   const plural = template.labels.products.toLowerCase();
+
+  if (products.length === 0 && query) return <p className="text-muted">No {plural} match “{query}”.</p>;
 
   if (products.length === 0) {
     return (
@@ -21,27 +23,30 @@ export function ProductList({ products, template }: { products: ProductView[]; t
   }
 
   return (
-    <ul className="grid gap-4 sm:grid-cols-2">
-      {products.map((product) => (
-        <li key={product.id}>
-          <Link href={`/products/${product.id}`} className="block h-full no-underline">
-            <Card className="flex h-full gap-4 transition-colors hover:border-ink/40">
-              {product.photoUrl && (
-                <div className="w-20 shrink-0">
-                  <Photo src={product.photoUrl} alt="" aspect="square" sizes="80px" />
-                </div>
-              )}
-              <div>
-                <h2 className="mb-1 text-xl">{product.name}</h2>
-                <p className="text-sm text-ink">{product.format}</p>
-                {product.allergens.length > 0 && (
-                  <p className="mt-2 text-sm text-muted">Contains: {product.allergens.join(", ")}</p>
-                )}
-              </div>
-            </Card>
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <Table caption={template.labels.products}>
+      <thead>
+        <tr>
+          <Th>{template.labels.product}</Th>
+          <Th>Format</Th>
+          <Th>Allergens</Th>
+        </tr>
+      </thead>
+      <tbody>
+        {products.map((product) => (
+          <tr key={product.id} className="hover:bg-cream">
+            <Td>
+              <Link href={`/products/${product.id}`} className="flex items-center gap-3 font-medium text-ink">
+                <span className="w-10 shrink-0">
+                  {product.photoUrl ? <Photo src={product.photoUrl} alt="" aspect="square" sizes="40px" /> : <span className="block aspect-square rounded bg-sand" />}
+                </span>
+                {product.name}
+              </Link>
+            </Td>
+            <Td className="text-muted">{product.format}</Td>
+            <Td className="text-muted">{product.allergens.length > 0 ? product.allergens.join(", ") : "None listed"}</Td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
   );
 }

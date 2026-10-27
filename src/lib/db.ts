@@ -60,6 +60,15 @@ export function isStillReferenced(error: unknown): boolean {
 }
 
 /**
+ * True when row-level security refused a write (Postgres error 42501, "new row
+ * violates row-level security policy"), e.g. a public insert over a limit.
+ */
+export function isPolicyViolation(error: unknown): boolean {
+  const text = error instanceof Error ? `${error.message} ${JSON.stringify(error)} ${String(error.cause ?? "")}` : String(error);
+  return text.includes("42501") || text.includes("row-level security");
+}
+
+/**
  * For public story pages (no login): runs `work` with app.public = 'on'.
  * Row-level security then allows reading only published batches and what
  * their story page shows, and adding scan events. See the

@@ -65,10 +65,5 @@ export function stickerPositions(sheet = STICKER_SHEET): StickerBox[] {
   return boxes;
 }
 
-/**
- * The built-in PDF fonts only cover Western European characters; anything
- * else (e.g. emoji) is replaced so the PDF never fails to build.
- */
-export function pdfSafeText(text: string): string {
-  return text.replace(/[^\x20-\x7E -ÿ]/g, "?");
-}
+/** Re-exported from src/lib/pdf-text.ts (shared with the compliance export). */
+export { pdfSafeText } from "@/lib/pdf-text";
