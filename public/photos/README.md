@@ -9,7 +9,7 @@ JPG **with the same file name** (keep roughly the same shape) and reload.
 | `auth/side.jpg` | Right side of sign-up and login (large screens) | Tall portrait, about 9:16 (e.g. 900 × 1600) |
 | `industries/{id}.jpg` | "What do you make?" cards (sign-up and home) | Landscape 16:9 (e.g. 800 × 450) |
 
-Industry ids: `brewery`, `bakery`, `poultry`, `produce`, `coffee`, `winery` (plus `drinks`, the shared Brewery & winery card). A new
+Industry ids: `brewery`, `bakery`, `poultry`, `produce`, `coffee`, `winery`, `cosmetics`, `other` (plus `drinks`, the shared Brewery & winery card). A new
 industry template only needs a photo with its id as the file name.
 
 Plain sand-coloured files are placeholders waiting for a real photo.
@@ -31,3 +31,5 @@ Each was cropped and resized for Rootline. (`home/hero-produce.jpg` and `industr
 | `industries/coffee.jpg` | https://unsplash.com/photos/white-ceramic-mug-on-brown-coffee-beans-UTdA-_U4DQw (Brent Ninaber) |
 | `industries/bakery.jpg` | https://unsplash.com/photos/photo-1628088062854-d1870b4553da |
 | `industries/winery.jpg` | https://unsplash.com/photos/photo-1610832958506-aa56368176cf |
+| `industries/cosmetics.jpg` | https://unsplash.com/photos/ts3gC_gv47A |
+| `industries/other.jpg` | https://unsplash.com/photos/Y_3UR9KTTAg (Josip Ivanković) |

@@ -40,7 +40,7 @@ describe("industry templates", () => {
   });
 
   it("offers every industry in the sign-up list, brewery first", () => {
-    expect(industryOptions().map((o) => o.label)).toEqual(["Brewery", "Bakery", "Poultry & eggs", "Fruits & vegetables", "Coffee", "Winery"]);
+    expect(industryOptions().map((o) => o.label)).toEqual(["Brewery", "Bakery", "Poultry & eggs", "Fruits & vegetables", "Coffee", "Winery", "Cosmetics & skincare", "Something else"]);
   });
 
   it("looks templates up by id and rejects unknown ids", () => {

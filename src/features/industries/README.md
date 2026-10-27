@@ -1,13 +1,13 @@
 # Industries feature
 
-Rootline is one engine for every food and drink producer. This feature holds the **industry templates** that change the engine's words, extra fields, dates, badges and default journey stops. It has no screens or database tables of its own. Every other feature reads from it.
+Rootline is one engine for every small-batch producer: food, drink and cosmetics. This feature holds the **industry templates** that change the engine's words, extra fields, dates, badges and default journey stops. It has no screens or database tables of its own. Every other feature reads from it.
 
 ## Main files
 
 | File | What it does |
 |---|---|
 | `template.schema.ts` | The one Zod schema every template must pass |
-| `templates/*.ts` | One file per industry: `brewery` (the polished one), `bakery`, `poultry`, `produce` (fruits & vegetables), `coffee`, `winery` |
+| `templates/*.ts` | One file per industry: `brewery` (the polished one), `bakery`, `poultry`, `produce` (fruits & vegetables), `coffee`, `winery`, `cosmetics` (cosmetics & skincare), `other` ("Something else": honey, preserves, sauces and more) |
 | `templates/index.ts` | The list of templates (also the order of the sign-up dropdown) |
 | `registry.ts` | `getTemplate(id)`, `industryOptions()`, `industryIdSchema`, `industryPhotoUrl(id)`. Templates are validated once when the module loads |
 | `choices.ts` | `industryChoices()`: how industries appear as "What do you make?" cards. Brewery and winery share one card and stay separate templates |

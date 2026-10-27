@@ -1,6 +1,6 @@
 # Rootline
 
-Rootline is a food and drink traceability web app. Producers (breweries first, then wineries, bakeries, egg farms, fruit and vegetable growers and coffee roasters) record where each batch came from. Each batch gets a QR code. Shoppers scan it with their phone camera and see a story page: who made it, how fresh it is, verified badges, a route map from source to store, ingredients and allergens, and the people behind it.
+Rootline is a traceability web app for small-batch food, drink and skincare makers. Producers (breweries first, then wineries, bakeries, egg farms, fruit and vegetable growers, coffee roasters, skincare makers and other small-batch makers) record where each batch came from. Each batch gets a QR code. Shoppers scan it with their phone camera and see a story page: who made it, how fresh it is, verified badges, a route map from source to store, ingredients and allergens, and the people behind it.
 
 **The core rule:** a claim such as "Organic" or "B Corp" only shows as a badge while a valid, unexpired certificate is on file.
 

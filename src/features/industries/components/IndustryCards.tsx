@@ -99,7 +99,7 @@ const signUpLink = (industryId: string) => `/signup?industry=${industryId}`;
 
 export function IndustryLinks() {
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {industryChoices().map((choice) => {
         const [only] = choice.templates;
         return (

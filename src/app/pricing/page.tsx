@@ -45,7 +45,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
               Prove where it <em className="font-serif font-normal italic">came from</em>
             </h1>
             <p className="max-w-lg text-muted">
-              Pick the plan that fits your brewery, winery, bakery or farm. Every plan starts with {TRIAL_DAYS} days of Growth, free, with no card needed.
+              Pick the plan that fits your brewery, winery, bakery, farm or skincare studio. Every plan starts with {TRIAL_DAYS} days of Growth, free, with no card needed.
             </p>
           </header>
           <PricingTable interval={interval} ctaHref={startHref} salesEmail={serverConfig().SALES_EMAIL ?? null} />

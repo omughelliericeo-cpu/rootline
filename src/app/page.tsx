@@ -154,7 +154,7 @@ export default function HomePage() {
               Fresh. Local. Traceable.
             </h2>
             <p className="max-w-xl text-muted">
-              From craft beer to fresh eggs, Rootline helps you share the story behind every batch. Pick yours to start.
+              From craft beer and fresh eggs to handmade skincare, Rootline helps you share the story behind every batch. Pick yours to start.
             </p>
           </div>
           <IndustryLinks />
