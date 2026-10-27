@@ -23,7 +23,9 @@ test.describe("producer account", () => {
 
   test("sign-up starts with 'What do you make?' and loads the industry's words", async ({ page }) => {
     await page.goto("/signup");
-    await page.getByRole("radio", { name: /Brewery/ }).check();
+    // Brewery and winery share a card: clicking it shows the two choices.
+    await page.getByText("Brewery & winery", { exact: true }).last().click();
+    await page.getByRole("radio", { name: "Brewery" }).check();
     await page.getByRole("button", { name: "Next" }).click();
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Set up your brewery");
