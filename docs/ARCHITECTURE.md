@@ -1,5 +1,7 @@
 # Architecture
 
+> **Prefer pictures?** [ARCHITECTURE-DIAGRAMS.md](ARCHITECTURE-DIAGRAMS.md) has diagrams of the whole system, every main flow and the data model, each linked to its code.
+
 Rootline is one shared engine plus **industry templates**. Every industry uses the same features (suppliers, products, batches, journey, certificates, story page). A template only changes labels, extra fields, date names, the freshness wording, allowed badges and default journey stops.
 
 **Status:** the MVP is complete (Milestones 0–6, 8 and 9) and deployed on Vercel with a Supabase project. Tips (M7) and the private "You are here" marker are still to come. Six industries ship: brewery, winery, bakery, poultry & eggs, fruits & vegetables and coffee, each with a demo brand from `npm run db:seed`.

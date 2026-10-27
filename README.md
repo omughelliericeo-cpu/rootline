@@ -152,7 +152,7 @@ The MVP works; these are the remaining production steps (details in `docs/DECISI
 - `src/lib`: shared plumbing (logger, errors, the server action wrapper, database client, config).
 - `src/ui`: design-system components.
 - `src/app`: routes only. They stay thin and call into features.
-- `docs/`: [ARCHITECTURE](docs/ARCHITECTURE.md), [DECISIONS](docs/DECISIONS.md), [TROUBLESHOOTING](docs/TROUBLESHOOTING.md).
+- `docs/`: [ARCHITECTURE DIAGRAMS](docs/ARCHITECTURE-DIAGRAMS.md) (start here), [ARCHITECTURE](docs/ARCHITECTURE.md), [DECISIONS](docs/DECISIONS.md), [TROUBLESHOOTING](docs/TROUBLESHOOTING.md).
 
 ## Tech stack
 
