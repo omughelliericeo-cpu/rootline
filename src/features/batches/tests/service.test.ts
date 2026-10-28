@@ -104,7 +104,7 @@ describe("publishProblems", () => {
   });
 
   it("does not require a packaged date for industries that count from the made date", () => {
-    expect(publishProblems({ lots, stops: [stop({ type: "bakery" })], packagedAt: null, template: getTemplate("bakery") })).toEqual([]);
+    expect(publishProblems({ lots, stops: [stop({ type: "studio" })], packagedAt: null, template: getTemplate("cosmetics") })).toEqual([]);
   });
 });
 

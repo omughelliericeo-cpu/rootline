@@ -25,7 +25,7 @@ beforeAll(async () => {
   await owner.brandPerson.deleteMany();
   await owner.brand.deleteMany();
   brandA = (await owner.brand.create({ data: { ownerUserId: userA, industry: "brewery", name: "Brand A", location: "A" } })).id;
-  brandB = (await owner.brand.create({ data: { ownerUserId: userB, industry: "bakery", name: "Brand B", location: "B" } })).id;
+  brandB = (await owner.brand.create({ data: { ownerUserId: userB, industry: "coffee", name: "Brand B", location: "B" } })).id;
   await owner.brandPerson.create({ data: { brandId: brandB, name: "Bea", role: "Baker" } });
   const supplierB = await owner.supplier.create({
     data: { brandId: brandB, name: "Mill B", sourceType: "flour-mill", supplies: "Flour", address: "B", latitude: 49, longitude: -123 },
@@ -52,7 +52,7 @@ beforeAll(async () => {
         number: 1,
         madeAt: new Date(),
         lots: { create: [{ supplierId: supplierB.id, ingredient: "Flour", lotNumber: "M-1" }] },
-        stops: { create: [{ position: 1, name: "Bakery B", type: "bakery" }] },
+        stops: { create: [{ position: 1, name: "Roastery B", type: "roastery" }] },
       },
     })
   ).id;

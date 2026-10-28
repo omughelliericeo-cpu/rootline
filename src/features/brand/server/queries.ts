@@ -79,3 +79,12 @@ export async function findBrandIdForOwner(userId: string): Promise<string | null
   );
   return brand?.id ?? null;
 }
+
+/**
+ * Deletes the owner's brand. Everything that belongs to it (people, suppliers, products,
+ * certificates, batches, scans, recall sign-ups, shelf codes, shopper photos) goes with it
+ * through ON DELETE CASCADE. Uploaded files are removed separately (removeAllBrandFiles).
+ */
+export async function deleteBrandForOwner(owner: Owner): Promise<void> {
+  await withTenant({ userId: owner.userId, brandId: owner.brandId }, (tx) => tx.brand.delete({ where: { id: owner.brandId } }));
+}

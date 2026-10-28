@@ -21,7 +21,7 @@ export async function loadComplianceRecord(owner: Owner, batchId: string, now: D
   const template = getTemplate(owner.industry);
   const zone = owner.timezone;
   const supplierById = new Map(suppliers.map((supplier) => [supplier.id, supplier]));
-  // Bakery-style templates record the time of making too.
+  // Templates with includesTime record the time of making too.
   const madeOn = template.dates.made.includesTime
     ? `${dateKeyIn(batch.madeAt, zone)} ${timeIn(batch.madeAt, zone)}`
     : dateKeyIn(batch.madeAt, zone);

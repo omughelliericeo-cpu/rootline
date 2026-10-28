@@ -37,7 +37,7 @@ test.describe("compliance export", () => {
   });
 
   test("another brand's batch cannot be exported", async ({ page }) => {
-    const other = await createTestProducer("bakery");
+    const other = await createTestProducer("coffee");
     try {
       await logIn(page, other);
       const response = await page.request.get(`/batches/${story.batchId}/export?format=csv`);

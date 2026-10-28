@@ -22,6 +22,7 @@ export default async function ProducerLayout({ children }: { children: ReactNode
     { href: "/shopper-photos", label: waitingPhotos > 0 ? `Shopper photos (${waitingPhotos})` : "Shopper photos", icon: "camera" },
     { href: "/brand", label: "Brand profile", icon: "store" },
     { href: "/billing", label: "Plan & billing", icon: "document" },
+    { href: "/account", label: "Account", icon: "user" },
   ];
 
   return (

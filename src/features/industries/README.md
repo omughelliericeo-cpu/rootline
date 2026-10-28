@@ -7,7 +7,7 @@ Rootline is one engine for every small-batch producer: food, drink and cosmetics
 | File | What it does |
 |---|---|
 | `template.schema.ts` | The one Zod schema every template must pass |
-| `templates/*.ts` | One file per industry: `brewery` (the polished one), `bakery`, `poultry`, `produce` (fruits & vegetables), `coffee`, `winery`, `cosmetics` (cosmetics & skincare), `other` ("Something else": honey, preserves, sauces and more) |
+| `templates/*.ts` | One file per industry: `brewery` (the polished one), `poultry`, `produce` (fruits & vegetables), `coffee`, `winery`, `cosmetics` (cosmetics & skincare), `other` ("Something else": honey, preserves, sauces and more) |
 | `templates/index.ts` | The list of templates (also the order of the sign-up dropdown) |
 | `registry.ts` | `getTemplate(id)`, `industryOptions()`, `industryIdSchema`, `industryPhotoUrl(id)`. Templates are validated once when the module loads |
 | `choices.ts` | `industryChoices()`: how industries appear as "What do you make?" cards. Brewery and winery share one card and stay separate templates |
@@ -33,7 +33,7 @@ Rootline is one engine for every small-batch producer: food, drink and cosmetics
 
 ## Adding a new industry
 
-1. Copy an existing file in `templates/`, e.g. `cp templates/bakery.ts templates/cidery.ts`, and edit it. The `id` must match the file name.
+1. Copy an existing file in `templates/`, e.g. `cp templates/coffee.ts templates/cidery.ts`, and edit it. The `id` must match the file name.
 2. Add it to the list in `templates/index.ts`.
 3. Add its card photo as `public/photos/industries/<id>.jpg` (3:2 landscape).
 4. Add a demo brand to `prisma/seed/brands-*.mts` so its story page can be seen with `npm run db:seed`.

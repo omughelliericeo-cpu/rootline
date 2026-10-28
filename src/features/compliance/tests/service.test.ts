@@ -39,11 +39,6 @@ describe("buildComplianceRecord", () => {
     expect(record.details.some(([label]) => label === "Style")).toBe(false);
   });
 
-  it("has no packaged date for industries without one (bakeries)", () => {
-    const bakery = buildComplianceRecord({ ...input("bakery"), batch: { ...input().batch, packagedOn: null } });
-    expect(bakery.details.some(([label]) => label === "Canned" || label === "Packaged")).toBe(false);
-    expect(bakery.details).toEqual(expect.arrayContaining([["Baked", "2026-10-01"]]));
-  });
 
   it("labels supplier and stop types from the template", () => {
     expect(record.lots[0]).toMatchObject({ supplier: "Kowalski Farm", type: "Maltster or grain farm", lotNumber: "KF-2026-118" });

@@ -1,5 +1,6 @@
 "use client";
 // Email and password login for producers.
+import Link from "next/link";
 import { fieldError } from "@/lib/result";
 import { Card, Field, FormStatus, Input, SubmitButton } from "@/ui";
 import { useFormAction } from "@/ui/useFormAction";
@@ -19,6 +20,9 @@ export function LogInForm({ next }: { next?: string }) {
         <Field id="password" label="Password" error={error("password")}>
           <Input id="password" name="password" type="password" required autoComplete="current-password" invalid={!!error("password")} />
         </Field>
+        <p className="-mt-3 text-right text-sm">
+          <Link href="/forgot-password">Forgot your password?</Link>
+        </p>
         <SubmitButton pending={formActionPending} fullWidth pendingLabel="Logging in…">
           Log in
         </SubmitButton>

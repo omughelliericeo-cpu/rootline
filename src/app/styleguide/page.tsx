@@ -114,7 +114,7 @@ export default function StyleguidePage() {
                   placeholder="Choose one"
                   options={[
                     { value: "brewery", label: "Brewery" },
-                    { value: "bakery", label: "Bakery" },
+                    { value: "coffee", label: "Coffee" },
                   ]}
                 />
               </Field>

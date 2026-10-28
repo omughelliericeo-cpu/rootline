@@ -1,6 +1,7 @@
 // Tests for the freshness line and template-driven field validation.
 import { describe, expect, it } from "vitest";
 import { getTemplate } from "../registry";
+import type { IndustryTemplate } from "../template.schema";
 import { calendarDaysBetween, extraFieldsSchema, freshnessLabel, optionLabel } from "../service";
 
 const VANCOUVER = "America/Vancouver";
@@ -9,7 +10,8 @@ const NOW = new Date("2026-10-24T17:00:00Z");
 
 describe("freshnessLabel", () => {
   const brewery = getTemplate("brewery").freshness;
-  const bakery = getTemplate("bakery").freshness;
+  // No current template counts hours ("Baked at 5am today"), but the engine still supports it.
+  const bakery: IndustryTemplate["freshness"] = { from: "madeAt", style: "timeToday", verb: "Baked" };
   const winery = getTemplate("winery").freshness;
 
   it("counts days since canning for beer", () => {
@@ -46,7 +48,7 @@ describe("freshnessLabel", () => {
     expect(freshnessLabel(brewery, { madeAt: NOW, packagedAt: null }, NOW, VANCOUVER)).toBeNull();
   });
 
-  it("gives bakeries the time of baking today", () => {
+  it("gives the time of making today (style timeToday)", () => {
     const fiveAm = new Date("2026-10-24T12:00:00Z"); // 5:00am local
     const fiveThirty = new Date("2026-10-24T12:30:00Z");
     expect(freshnessLabel(bakery, { madeAt: fiveAm }, NOW, VANCOUVER)).toBe("Baked at 5am today");

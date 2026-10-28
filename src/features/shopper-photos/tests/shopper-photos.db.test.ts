@@ -19,7 +19,7 @@ const photo = (batchId: string, brandId: string, extra: Record<string, unknown> 
 });
 
 beforeAll(async () => {
-  await owner.brand.deleteMany({ where: { name: { in: ["Photo Brewing A", "Photo Bakery B"] } } });
+  await owner.brand.deleteMany({ where: { name: { in: ["Photo Brewing A", "Photo Roastery B"] } } });
   const create = async (name: string, userId: string, industry: string, codes: Array<[string, "LIVE" | "DRAFT"]>) => {
     const brand = await owner.brand.create({ data: { ownerUserId: userId, industry, name, location: "Here" } });
     const product = await owner.product.create({ data: { brandId: brand.id, name: `${name} product`, format: "can" } });
@@ -30,7 +30,7 @@ beforeAll(async () => {
     return { brand: brand.id, batches };
   };
   const a = await create("Photo Brewing A", users.a, "brewery", [["phot2a2b", "LIVE"], ["phot2d2r", "DRAFT"]]);
-  const b = await create("Photo Bakery B", users.b, "bakery", [["phot2b2b", "LIVE"]]);
+  const b = await create("Photo Roastery B", users.b, "coffee", [["phot2b2b", "LIVE"]]);
   Object.assign(ids, { brandA: a.brand, live: a.batches[0], draft: a.batches[1], brandB: b.brand, liveB: b.batches[0] });
 });
 
@@ -77,7 +77,7 @@ describe("public (story page)", () => {
 
 describe("producers", () => {
   it("see and moderate only their own brand's photos", async () => {
-    await owner.shopperPhoto.create({ data: photo(ids.liveB, ids.brandB, { note: "Bakery photo" }) });
+    await owner.shopperPhoto.create({ data: photo(ids.liveB, ids.brandB, { note: "Roastery photo" }) });
     const asA = await withTenant({ userId: users.a, brandId: ids.brandA }, (tx) => tx.shopperPhoto.findMany({ select: { brandId: true } }));
     expect(asA.length).toBeGreaterThan(0);
     expect(asA.every((row) => row.brandId === ids.brandA)).toBe(true);

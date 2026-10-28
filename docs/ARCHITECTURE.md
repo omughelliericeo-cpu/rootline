@@ -4,7 +4,7 @@
 
 Rootline is one shared engine plus **industry templates**. Every industry uses the same features (suppliers, products, batches, journey, certificates, story page). A template only changes labels, extra fields, date names, the freshness wording, allowed badges and default journey stops.
 
-**Status:** the MVP is complete (Milestones 0–6, 8 and 9) and deployed on Vercel with a Supabase project. Tips (M7) and the private "You are here" marker are still to come. Eight industries ship: brewery, winery, bakery, poultry & eggs, fruits & vegetables, coffee, cosmetics & skincare and "Something else". The first six each have a demo brand from `npm run db:seed`.
+**Status:** the MVP is complete (Milestones 0–6, 8 and 9) and deployed on Vercel with a Supabase project. Tips (M7) and the private "You are here" marker are still to come. Seven industries ship: brewery, winery, poultry & eggs, fruits & vegetables, coffee, cosmetics & skincare and "Something else". The first five each have a demo brand from `npm run db:seed`. (Bakery was removed at the owner's request; bakers can use "Something else".)
 
 ## Folder map
 
@@ -45,8 +45,8 @@ src/features/batches/
 
 | Feature | What it owns | Milestone |
 |---|---|---|
-| `auth` | Email sign-up / login, the one owner per brand | M1 |
-| `industries` | The eight templates (brewery, bakery, poultry & eggs, fruits & vegetables, coffee, winery, cosmetics & skincare, something else), their Zod schema and the registry; `choices.ts` groups brewery and winery into one card | M1 |
+| `auth` | Email sign-up / login, the one owner per brand; forgot password, change password and delete account (`/account`) | M1, extra |
+| `industries` | The seven templates (brewery, poultry & eggs, fruits & vegetables, coffee, winery, cosmetics & skincare, something else), their Zod schema and the registry; `choices.ts` groups brewery and winery into one card | M1 |
 | `brand` | Brand profile, photos, people, quote, video link | M1 |
 | `suppliers` | Farms and suppliers with location | M2 |
 | `products` | Product templates: ingredients, allergens, dietary tags | M2 |

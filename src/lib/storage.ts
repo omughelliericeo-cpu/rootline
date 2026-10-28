@@ -83,6 +83,30 @@ export async function removeCertificateFiles(paths: string[]): Promise<void> {
   await removeFrom(CERTIFICATES_BUCKET, paths);
 }
 
+/**
+ * Every file a brand has uploaded, in all three buckets (paths are "{brandId}/{kind}/{file}").
+ * Used when an account is deleted. Supabase lists one folder level at a time, 1000 files per call.
+ */
+export async function removeAllBrandFiles(brandId: string): Promise<number> {
+  let removed = 0;
+  for (const bucket of [BRAND_MEDIA_BUCKET, CERTIFICATES_BUCKET, SHOPPER_PHOTOS_BUCKET]) {
+    const storage = supabaseAdmin().storage.from(bucket);
+    const { data: folders, error } = await storage.list(brandId, { limit: 100 });
+    if (error) throw error;
+    for (const folder of folders ?? []) {
+      for (;;) {
+        const { data: files, error: listError } = await storage.list(`${brandId}/${folder.name}`, { limit: 1000 });
+        if (listError) throw listError;
+        const paths = (files ?? []).filter((file) => file.id).map((file) => `${brandId}/${folder.name}/${file.name}`);
+        if (paths.length === 0) break;
+        await removeFrom(bucket, paths);
+        removed += paths.length;
+      }
+    }
+  }
+  return removed;
+}
+
 async function removeFrom(bucket: string, paths: string[]): Promise<void> {
   if (paths.length === 0) return;
   const { error } = await supabaseAdmin().storage.from(bucket).remove(paths);

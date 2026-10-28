@@ -165,7 +165,7 @@ Each entry records a significant technical choice: what we chose, what else we c
 - **Why:** the core rule is that every journey starts at a named supplier and lot. A story page with a broken map or a missing "Canned N days ago" would undermine trust. Drafts may be incomplete.
 
 ### 2026-10-25 · Template names the producer's own stop (`ownStopType`)
-- **Choice:** each template says which default stop is the producer's own place (brewery, bakery, farm, roastery, winery). A product's first batch fills that stop from the brand profile.
+- **Choice:** each template says which default stop is the producer's own place (brewery, farm, roastery, winery, studio). A product's first batch fills that stop from the brand profile.
 - **Alternatives:** assume the first stop is the producer.
 - **Why:** coffee and wine journeys start at a farm or vineyard, not at the producer. A template property avoids industry `if/else`.
 

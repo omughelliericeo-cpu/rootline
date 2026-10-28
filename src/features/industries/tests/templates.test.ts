@@ -40,7 +40,7 @@ describe("industry templates", () => {
   });
 
   it("offers every industry in the sign-up list, brewery first", () => {
-    expect(industryOptions().map((o) => o.label)).toEqual(["Brewery", "Bakery", "Poultry & eggs", "Fruits & vegetables", "Coffee", "Winery", "Cosmetics & skincare", "Something else"]);
+    expect(industryOptions().map((o) => o.label)).toEqual(["Brewery", "Poultry & eggs", "Fruits & vegetables", "Coffee", "Winery", "Cosmetics & skincare", "Something else"]);
   });
 
   it("looks templates up by id and rejects unknown ids", () => {
@@ -51,7 +51,8 @@ describe("industry templates", () => {
   });
 
   it("rejects a template whose freshness uses a packaged date it does not have", () => {
-    const broken = { ...TEMPLATE_FILES[1], freshness: { from: "packagedAt", style: "daysAgo", verb: "Baked" } };
+    const coffee = TEMPLATE_FILES.find((template) => template.id === "coffee")!;
+    const broken = { ...coffee, dates: { ...coffee.dates, packaged: null }, freshness: { from: "packagedAt", style: "daysAgo", verb: "Bagged" } };
     expect(templateSchema.safeParse(broken).success).toBe(false);
   });
 });

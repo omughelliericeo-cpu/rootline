@@ -11,7 +11,7 @@ import { LineIcon, SiteHeader, buttonClasses, cx, type LineIconName } from "@/ui
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Rootline plans for craft breweries, wineries, bakeries, farms and roasters. Start with a free 30-day trial.",
+  description: "Rootline plans for craft breweries, wineries, farms, roasters and skincare makers. Start with a free 30-day trial.",
 };
 
 const REASONS: Array<{ icon: LineIconName; title: string; text: string }> = [
@@ -45,7 +45,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
               Prove where it <em className="font-serif font-normal italic">came from</em>
             </h1>
             <p className="max-w-lg text-muted">
-              Pick the plan that fits your brewery, winery, bakery, farm or skincare studio. Every plan starts with {TRIAL_DAYS} days of Growth, free, with no card needed.
+              Pick the plan that fits your brewery, winery, roastery, farm or skincare studio. Every plan starts with {TRIAL_DAYS} days of Growth, free, with no card needed.
             </p>
           </header>
           <PricingTable interval={interval} ctaHref={startHref} salesEmail={serverConfig().SALES_EMAIL ?? null} />

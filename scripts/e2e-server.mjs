@@ -9,7 +9,9 @@ const port = process.argv[2] ?? "3100";
 // GEOCODER_URL=off: tests must not send lookups to OpenStreetMap's public
 // service, so address search is switched off and fails at once.
 // EMAIL_PROVIDER=log: tests never send real email; recalls are written to the logs instead.
-const env = { ...process.env, NEXT_DIST_DIR: ".next-e2e", GEOCODER_URL: "off", EMAIL_PROVIDER: "log" };
+// Empty Stripe keys: tests never call Stripe, even when .env holds test-mode keys
+// (Next.js keeps a variable already set, even to "", over the one in .env).
+const env = { ...process.env, NEXT_DIST_DIR: ".next-e2e", GEOCODER_URL: "off", EMAIL_PROVIDER: "log", STRIPE_SECRET_KEY: "", STRIPE_WEBHOOK_SECRET: "" };
 // shell: true lets "npx" resolve on Windows as well as macOS/Linux.
 const options = { stdio: "inherit", env, shell: true };
 

@@ -23,6 +23,25 @@ function Soon({ dark }: { dark?: boolean }) {
   );
 }
 
+/** A plan's main features with ticks, as on its pricing card (also used on Plan & billing). */
+export function PlanHighlights({ id, dark, className }: { id: PlanId; dark?: boolean; className?: string }) {
+  return (
+    <ul className={cx("flex flex-col gap-2 text-sm", dark ? "text-card/90" : "text-ink", className)}>
+      {PLANS[id].highlights.map((item) => (
+        <li key={item.text} className="flex gap-2">
+          <span aria-hidden="true" className={dark ? "text-sage-soft" : "text-forest"}>
+            ✓
+          </span>
+          <span>
+            {item.text}
+            {item.soon && <Soon dark={dark} />}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function CellText({ cell }: { cell: Cell }) {
   if (typeof cell === "string") return <>{cell}</>;
   return (

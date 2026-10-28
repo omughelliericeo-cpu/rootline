@@ -254,3 +254,23 @@ export async function logIn(page: Page, producer: TestProducer): Promise<void> {
   // Generous timeout: the first visit compiles the dashboard in dev mode.
   await page.waitForURL(/\/dashboard/, { timeout: 20_000 });
 }
+
+/** The link a "reset your password" email would hold (token_hash template); no email is sent. */
+export async function recoveryLink(email: string): Promise<string> {
+  const { data, error } = await admin().auth.admin.generateLink({ type: "recovery", email });
+  if (error || !data.properties) throw error ?? new Error("generateLink returned no link");
+  return `/auth/confirm?token_hash=${data.properties.hashed_token}&type=recovery`;
+}
+
+/** Whether the producer's login and brand still exist (after deleting the account). */
+export async function accountState(producer: TestProducer): Promise<{ login: boolean; brand: boolean }> {
+  const { data } = await admin().auth.admin.getUserById(producer.userId);
+  const brand = await asOwner(async (client) => (await client.query("SELECT 1 FROM brand WHERE id = $1", [producer.brandId])).rowCount ?? 0);
+  return { login: Boolean(data.user), brand: brand > 0 };
+}
+
+/** Stores a small file straight into storage (test set-up only). */
+export async function putFile(bucket: string, path: string): Promise<void> {
+  const { error } = await admin().storage.from(bucket).upload(path, new Blob(["test"], { type: "image/png" }), { upsert: true });
+  if (error) throw error;
+}

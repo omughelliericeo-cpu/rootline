@@ -4,7 +4,7 @@ A batch is one production run of a product, e.g. "Hazy Pale Ale, Brew 214". It h
 
 ## The New batch flow (under 2 minutes on a phone)
 
-1. **Product & dates** (`/batches/new` → `createBatch`): pick the product. The number is pre-filled with the next one for that product. Then enter the made date (and time, if the template needs one, e.g. bakeries) and the packaged date if the template has one. On create:
+1. **Product & dates** (`/batches/new` → `createBatch`): pick the product. The number is pre-filled with the next one for that product. Then enter the made date (and time, if the template needs one) and the packaged date if the template has one. On create:
    - the **lots** are copied from the previous batch of the same product (`defaultLotsFor`);
    - the **journey stops** are copied too, without their dates (`defaultStopsFor`). A product's first batch starts from the template's default stops, with the producer's own place (`ownStopType`) filled in from the brand profile.
 2. **Lots** (`/batches/{id}/lots` → `saveLots`): check or change the supplier, what came from them and the lot number. Spare rows add more, and blank rows are ignored.
@@ -46,7 +46,7 @@ Pages: `src/app/(producer)/batches/` (list, `new`, `[batchId]` with `details`, `
 
 Row-level security covers all three; lots and stops are visible when their batch is. A product with batches, or a supplier used in lots, cannot be deleted (`IN_USE`).
 
-Dates: a date without a time is stored as midday in the brand's time zone, so it reads as the same calendar day there. Bakery-style times are converted exactly.
+Dates: a date without a time is stored as midday in the brand's time zone, so it reads as the same calendar day there. Templates that record a time of making have it converted exactly.
 
 ## Connections
 

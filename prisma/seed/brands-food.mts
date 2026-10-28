@@ -1,48 +1,9 @@
-// Demo brands for food: Dawn Rise Bakehouse (bakery), Briar Creek Farm
-// (poultry & eggs) and Sunfield Organics (fruits & vegetables). Fictional
-// businesses in real BC places; lot numbers and certificates are samples.
+// Demo brands for food: Briar Creek Farm (poultry & eggs) and Sunfield
+// Organics (fruits & vegetables). Fictional businesses in real BC places;
+// lot numbers and certificates are samples.
 import type { DemoBrand } from "./build.mjs";
 
 const PASSWORD = "Rootline-demo-2026";
-
-export const dawnRise: DemoBrand = {
-  email: "demo@dawnrise.test",
-  password: PASSWORD,
-  industry: "bakery",
-  name: "Dawn Rise Bakehouse",
-  location: { address: "Victoria, BC", latitude: 48.4284, longitude: -123.3656 },
-  quote: "Our flour is milled forty minutes up the island. The starter is older than the bakery.",
-  people: [
-    { name: "Mira Chen", role: "Head baker" },
-    { name: "Owen Harris", role: "Miller, Cowichan Valley" },
-  ],
-  suppliers: [
-    { key: "mill", name: "Cowichan Valley Mill", sourceType: "flour-mill", supplies: "Red Fife flour", address: "Duncan, BC", latitude: 48.7787, longitude: -123.7079 },
-    { key: "dairy", name: "Saanich Dairy", sourceType: "dairy", supplies: "Butter", address: "Saanichton, BC", latitude: 48.596, longitude: -123.418 },
-  ],
-  product: {
-    name: "Country Sourdough",
-    format: "800 g loaf",
-    ingredients: ["Red Fife wheat flour", "Water", "Sea salt", "Sourdough starter"],
-    allergens: ["Wheat"],
-    dietaryTags: ["Vegan"],
-    extra: { weight: 800, bestWithinDays: 3 },
-  },
-  certificates: [{ claim: "organic", issuer: "Islands Organic Producers Association", expiresInDays: 150, productOnly: true }],
-  batch: {
-    code: "dawnbak3",
-    number: 88,
-    madeDaysAgo: 0,
-    madeTime: "05:00",
-    packagedDaysAgo: null,
-    lots: [{ supplier: "mill", ingredient: "Red Fife flour", lotNumber: "CVM-1027" }],
-    stops: [
-      { name: "Dawn Rise Bakehouse", type: "bakery", address: "Fort St, Victoria, BC", latitude: 48.4247, longitude: -123.3612, daysAgo: 0, note: "Out of the oven at 5am" },
-      { name: "Moss Street Market", type: "store", address: "Moss St, Victoria, BC", latitude: 48.4196, longitude: -123.3398, daysAgo: 0 },
-    ],
-  },
-  scansPerDay: 6,
-};
 
 export const briarCreek: DemoBrand = {
   email: "demo@briarcreek.test",

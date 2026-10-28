@@ -28,7 +28,7 @@ export const templateSchema = z
     /** One line under the name on those cards, e.g. "Beer, cider and kombucha". */
     description: z.string().min(1).max(80),
     labels: z.object({
-      place: label, // "Brewery", "Bakery", "Farm"
+      place: label, // "Brewery", "Roastery", "Farm"
       maker: label, // "Brewer", "Baker"
       product: label, // "Beer"
       products: label, // "Beers"

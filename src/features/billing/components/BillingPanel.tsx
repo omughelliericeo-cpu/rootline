@@ -1,10 +1,12 @@
 // The Plan & billing page: the plan in force and why, usage against limits,
-// and the plans to choose from (Stripe Checkout) or manage (Stripe portal).
+// the plans to choose from (Stripe Checkout) or manage (Stripe portal), each with its
+// features, and the full comparison table.
 import Link from "next/link";
 import { Badge, Card, cx } from "@/ui";
 import { PLANS, annualSaving, type Interval } from "../plans";
 import type { BillingView, Usage } from "../server/queries";
 import { CheckoutButton, PortalButton } from "./BillingButtons";
+import { ComparisonTable, PlanHighlights } from "./PricingTable";
 
 const date = (value: Date, timeZone: string) => new Intl.DateTimeFormat("en-CA", { dateStyle: "medium", timeZone }).format(value);
 
@@ -109,7 +111,8 @@ export function BillingPanel({ view, interval, timeZone, salesEmail, notice }: B
                   <span className="font-sans text-sm text-muted"> / {interval === "year" ? "year" : "month"} CAD</span>
                 </p>
                 {interval === "year" && <p className="text-xs text-forest">Save ${annualSaving(id)} a year</p>}
-                <p className="flex-1 text-sm text-muted">{plan.tagline}</p>
+                <p className="text-sm text-muted">{plan.tagline}</p>
+                <PlanHighlights id={id} className="flex-1 border-t border-line pt-3" />
                 {view.plan === id && subscribed ? (
                   <p className="text-sm font-medium text-forest">Your current plan</p>
                 ) : !view.paymentsReady ? (
@@ -125,16 +128,19 @@ export function BillingPanel({ view, interval, timeZone, salesEmail, notice }: B
           <Card className="flex flex-col gap-3">
             <h3 className="text-xl">{PLANS.ENTERPRISE.name}</h3>
             <p className="font-serif text-3xl">Custom</p>
-            <p className="flex-1 text-sm text-muted">{PLANS.ENTERPRISE.tagline}</p>
+            <p className="text-sm text-muted">{PLANS.ENTERPRISE.tagline}</p>
+            <PlanHighlights id="ENTERPRISE" className="flex-1 border-t border-line pt-3" />
             <p className="text-sm">
               Talk to us{salesEmail ? <>: <span className="select-all font-medium">{salesEmail}</span></> : "."}
             </p>
           </Card>
         </div>
         <p className="text-sm text-muted">
-          Compare everything on the <Link href="/pricing">pricing page</Link>. Prices in Canadian dollars; taxes may apply. Cancel any time.
+          Prices in Canadian dollars; taxes may apply. Cancel any time.
         </p>
       </section>
+
+      <ComparisonTable />
     </div>
   );
 }

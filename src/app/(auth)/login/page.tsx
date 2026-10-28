@@ -9,14 +9,16 @@ export const metadata: Metadata = { title: "Log in" };
 
 const NOTICES: Record<string, string> = {
   confirm: "That confirmation link is invalid or has expired. Try logging in, or sign up again to get a new link.",
+  deleted: "Your account and everything in it have been deleted. Thank you for trying Rootline.",
 };
 
 export default async function LogInPage({ searchParams }: PageProps<"/login">) {
-  const { next, error } = await searchParams;
+  const { next, error, notice: noticeKey } = await searchParams;
   const nextPath = typeof next === "string" ? safeNextPath(next) : undefined;
   if (await getSessionUser()) redirect(nextPath ?? "/dashboard");
 
-  const notice = typeof error === "string" ? NOTICES[error] : undefined;
+  const key = typeof error === "string" ? error : noticeKey;
+  const notice = typeof key === "string" ? NOTICES[key] : undefined;
 
   return (
     <PageShell title="Welcome back" description="Log in to your producer account." width="narrow">

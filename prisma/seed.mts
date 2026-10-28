@@ -10,7 +10,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { createClient } from "@supabase/supabase-js";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { blackbirdRidge, cedarAndTide, ridgelineRoasters } from "./seed/brands-drinks.mjs";
-import { briarCreek, dawnRise, sunfield } from "./seed/brands-food.mjs";
+import { briarCreek, sunfield } from "./seed/brands-food.mjs";
 import { seedBrand } from "./seed/build.mjs";
 
 try {
@@ -24,7 +24,7 @@ const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SE
 
 async function main() {
   console.log("Seeded demo brands (story page, login):");
-  for (const brand of [cedarAndTide, blackbirdRidge, ridgelineRoasters, dawnRise, briarCreek, sunfield]) {
+  for (const brand of [cedarAndTide, blackbirdRidge, ridgelineRoasters, briarCreek, sunfield]) {
     await seedBrand(prisma, supabase, brand);
   }
 }

@@ -13,6 +13,9 @@ export const ERROR_MESSAGES = {
   AUTH_EMAIL_TAKEN: "An account with this email already exists. Try logging in instead.",
   AUTH_RATE_LIMITED: "Too many attempts. Please wait a few minutes and try again.",
   AUTH_CONFIRM_FAILED: "That confirmation link is invalid or has expired.",
+  AUTH_RESET_EXPIRED: "That password reset link has expired. Ask for a new one.",
+  AUTH_SAME_PASSWORD: "Choose a password different from your current one.",
+  ACCOUNT_DELETE_FAILED: "We couldn't delete your account. Nothing was removed; please try again.",
   // brand
   BRAND_NOT_FOUND: "No brand is set up for this account.",
   BRAND_PHOTO_LIMIT: "You have reached the maximum number of photos. Remove one to add another.",

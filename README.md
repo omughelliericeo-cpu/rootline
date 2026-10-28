@@ -1,6 +1,6 @@
 # Rootline
 
-Rootline is a traceability web app for small-batch food, drink and skincare makers. Producers (breweries first, then wineries, bakeries, egg farms, fruit and vegetable growers, coffee roasters, skincare makers and other small-batch makers) record where each batch came from. Each batch gets a QR code. Shoppers scan it with their phone camera and see a story page: who made it, how fresh it is, verified badges, a route map from source to store, ingredients and allergens, and the people behind it.
+Rootline is a traceability web app for small-batch food, drink and skincare makers. Producers (breweries first, then wineries, egg farms, fruit and vegetable growers, coffee roasters, skincare makers and other small-batch makers) record where each batch came from. Each batch gets a QR code. Shoppers scan it with their phone camera and see a story page: who made it, how fresh it is, verified badges, a route map from source to store, ingredients and allergens, and the people behind it.
 
 **The core rule:** a claim such as "Organic" or "B Corp" only shows as a badge while a valid, unexpired certificate is on file.
 
@@ -29,7 +29,7 @@ psql -U postgres -d rootline -c "ALTER ROLE rootline_app WITH LOGIN PASSWORD 'ro
 # 6. Create the file storage buckets in Supabase (once per Supabase project)
 npm run storage:setup
 
-# 7. Load the six demo brands (optional, but recommended)
+# 7. Load the five demo brands (optional, but recommended)
 npm run db:seed
 
 # 8. Start the app
@@ -46,7 +46,7 @@ Then open:
 | http://localhost:3000/products, /suppliers, /certificates | Products, suppliers and certificates (after logging in) |
 | http://localhost:3000/batches/new | The 3-step New batch flow (after logging in) |
 | http://localhost:3000/shelf-codes | Reusable shelf QR codes (after logging in) |
-| http://localhost:3000/b/cedarpm2 | The main demo story page (after `npm run db:seed`; all six demos are listed below) |
+| http://localhost:3000/b/cedarpm2 | The main demo story page (after `npm run db:seed`; all five demos are listed below) |
 | http://localhost:3000/shopper-photos | Approve or reject photos shoppers shared (after logging in) |
 | http://localhost:3000/pricing | Public pricing page |
 | http://localhost:3000/billing | Plan & billing (after logging in) |
@@ -57,11 +57,27 @@ Then open:
 
 1. Create a project at supabase.com.
 2. In **Project Settings → API**, copy the URL, the `anon` key and the `service_role` key into `.env` (`SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
-3. In **Authentication → URL Configuration**, set **Site URL** to `http://localhost:3000` and add `http://localhost:3000/auth/confirm` under **Redirect URLs**. (Add the production URLs too when deploying.)
+3. In **Authentication → URL Configuration**, set **Site URL** to `http://localhost:3000` and add `http://localhost:3000/auth/confirm**` under **Redirect URLs** (the `**` lets the password-reset link carry `?next=/reset-password`). Add the production URLs too when deploying, e.g. `https://rootline-taupe.vercel.app/auth/confirm**`.
 4. Recommended: in **Authentication → Email Templates → Confirm signup**, change the link to
    `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`
-   so the link also works when opened on a different device from the one used to sign up.
-5. Before real pilots, set up custom SMTP (Authentication → SMTP Settings). The built-in sender only allows a few emails per hour.
+   so the link also works when opened on a different device from the one used to sign up. Do the same for **Reset password**:
+   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`
+5. Before real pilots, set up custom SMTP: see "Sending real email" below.
+
+### Sending real email
+
+Rootline sends two kinds of email, and both should go through Resend from your own domain:
+- **Recall alerts** are sent by the app: set `EMAIL_PROVIDER=resend`, `RESEND_API_KEY` and `EMAIL_FROM` (e.g. `Rootline <hello@yourdomain.ca>`).
+- **Sign-up confirmations and password resets** are sent by Supabase. Its built-in sender only allows a few emails per hour, and only to the project's team members. In Supabase, **Authentication → Emails → SMTP Settings**, switch on custom SMTP: host `smtp.resend.com`, port `465`, username `resend`, password = your Resend API key, sender = the same address as `EMAIL_FROM`. Then raise **Authentication → Rate Limits → emails per hour** (e.g. to 100).
+
+Steps:
+1. Create a Resend account and add your domain (**Domains → Add domain**). Add the DNS records it shows (SPF, DKIM, and ideally DMARC) where you bought the domain, and wait until it says **Verified**.
+2. Create an API key with "Sending access".
+3. Put the three variables in `.env` and in Vercel (production), then redeploy.
+4. Set up Supabase's SMTP as above.
+5. Test: sign up with a real address, use "Forgot your password?", and send a test recall from a demo batch.
+
+Without a verified domain, Resend only delivers to the address you signed up to Resend with.
 
 ### Database roles
 
@@ -112,14 +128,13 @@ All variables are listed in [.env.example](.env.example). Empty optional values 
 
 ## Demo brands
 
-`npm run db:seed` creates six fictional producers in real BC places. Each has a login and a published story page.
+`npm run db:seed` creates five fictional producers in real BC places. Each has a login and a published story page.
 
 | Brand | Industry | Story page | Login |
 |---|---|---|---|
 | Cedar & Tide | Brewery (main demo) | `/b/cedarpm2` | `demo@cedarandtide.test` / `CedarTide-demo-2026` |
 | Blackbird Ridge Winery | Winery | `/b/syrah2v5` | `demo@blackbirdridge.test` / `Rootline-demo-2026` |
 | Ridgeline Roasters | Coffee | `/b/kaffe247` | `demo@ridgeline.test` / `Rootline-demo-2026` |
-| Dawn Rise Bakehouse | Bakery | `/b/dawnbak3` | `demo@dawnrise.test` / `Rootline-demo-2026` |
 | Briar Creek Farm | Poultry & eggs | `/b/eggsfrm2` | `demo@briarcreek.test` / `Rootline-demo-2026` |
 | Sunfield Organics | Fruits & vegetables | `/b/harvest7` | `demo@sunfield.test` / `Rootline-demo-2026` |
 

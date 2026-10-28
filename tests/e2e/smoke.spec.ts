@@ -19,3 +19,16 @@ test("every response carries a requestId", async ({ page }) => {
   const response = await page.goto("/");
   expect(response?.headers()["x-request-id"]).toMatch(/^req_[a-f0-9]{12}$/);
 });
+
+test("the home page lists every category in one row, without Bakery", async ({ page }) => {
+  await page.goto("/");
+  const row = page.getByRole("list", { name: "Categories" });
+  await expect(row.getByRole("listitem")).toHaveCount(6);
+  await expect(row.getByText("Cosmetics & skincare")).toBeVisible();
+  await expect(row.getByText("Bakery")).toHaveCount(0);
+
+  // The shared card shows its two choices when tapped.
+  await row.getByText("Brewery & winery").first().click();
+  await row.getByRole("link", { name: /Winery/ }).click();
+  await expect(page).toHaveURL(/\/signup\?industry=winery/);
+});
