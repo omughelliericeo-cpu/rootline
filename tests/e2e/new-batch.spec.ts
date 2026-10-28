@@ -45,18 +45,26 @@ test.describe("new batch", () => {
     await page.getByRole("button", { name: "Next: print" }).click();
     await page.waitForURL(/\/print$/);
 
-    // Step 3: the QR is ready, but publishing waits for map positions on the default stops.
+    // Step 3: the QR is ready, but publishing waits for a map position on the one starting stop (the brewery).
     await expect(page.getByRole("img", { name: /QR code for Hazy Pale Ale, Brew 1/ })).toBeVisible();
-    await expect(page.getByText("Stop 2 (Cold storage) needs an address and map position.")).toBeVisible();
+    await expect(page.getByText(/^Stop 1 (.+) needs an address and map position.$/)).toBeVisible();
     await expect(page.getByRole("button", { name: "Publish" })).toBeDisabled();
 
     // Fill in the journey, then publish.
     await page.getByRole("link", { name: "Edit the journey" }).click();
+    // A first brew starts with one stop; the rest are added with "Add another address".
+    await expect(page.locator("#stop-1-address")).toHaveCount(0);
     for (const [index, stop] of STOPS.entries()) {
+      if (index > 0) await page.getByRole("button", { name: "+ Add another address" }).click();
       await page.locator(`#stop-${index}-address`).fill(stop.address);
       await page.locator(`#stop-${index}-coordinates`).fill(stop.coordinates);
     }
     await page.locator("#stop-1-note").fill("Kept at 3°C");
+    // An extra stop can be added and removed again before saving.
+    await page.getByRole("button", { name: "+ Add another address" }).click();
+    await expect(page.locator("#stop-4-address")).toBeVisible();
+    await page.getByRole("button", { name: "Remove stop 5" }).click();
+    await expect(page.locator("#stop-4-address")).toHaveCount(0);
     await page.getByRole("button", { name: "Save journey" }).click();
     await expect(page.getByText("Journey saved.")).toBeVisible();
     await page.getByRole("link", { name: "Overview" }).click();

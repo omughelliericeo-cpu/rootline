@@ -26,7 +26,7 @@ Rootline is one engine for every small-batch producer: food, drink and cosmetics
   - `timeToday`: "Baked at 5am today"
   - `year`: "Vintage 2024"
 - `allowedBadges`: the only claims that may ever become badges, and only with a valid certificate.
-- `defaultStopTypes`: the journey stops a new batch starts with.
+- `defaultStopTypes`: the stop types offered for each journey stop, in their usual order ("Add another address" picks the next one).
 - `ownStopType`: which of those stops is the producer's own place. On a brand's first batch it is pre-filled with the brand's name and location.
 - `name` and `description`: shown on the "What do you make?" card.
 - `starterIngredients`, `starterAllergens`, `dietaryTags`: pick-lists for products.

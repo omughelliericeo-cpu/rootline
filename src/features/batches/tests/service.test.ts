@@ -65,18 +65,15 @@ describe("defaultStopsFor", () => {
     expect(stops.every((s) => s.arrivedOn === null)).toBe(true);
   });
 
-  it("uses the template's stops for a first batch, with the brand as its own place", () => {
+  it("starts a first batch with one stop: the brand's own place", () => {
     const stops = defaultStopsFor([], brewery, brand);
-    expect(stops.map((s) => s.type)).toEqual(["brewery", "cold-storage", "distributor", "store"]);
-    expect(stops[0]).toMatchObject({ name: "Cedar & Tide Brewing", address: "Port Moody, BC", latitude: 49.2838 });
-    expect(stops[1]).toMatchObject({ name: "Cold storage", address: "", latitude: null });
+    expect(stops).toHaveLength(1);
+    expect(stops[0]).toMatchObject({ type: "brewery", name: "Cedar & Tide Brewing", address: "Port Moody, BC", latitude: 49.2838 });
   });
 
-  it("finds the producer's own stop from the template, not its position", () => {
+  it("uses the template's own-place stop type, not the first in the list", () => {
     // Coffee journeys start at the farm; the roastery is the producer's own place.
-    const stops = defaultStopsFor([], getTemplate("coffee"), brand);
-    expect(stops.find((s) => s.type === "roastery")?.name).toBe("Cedar & Tide Brewing");
-    expect(stops.find((s) => s.type === "farm")?.name).toBe("Farm");
+    expect(defaultStopsFor([], getTemplate("coffee"), brand)[0]?.type).toBe("roastery");
   });
 });
 

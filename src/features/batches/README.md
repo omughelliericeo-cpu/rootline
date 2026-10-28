@@ -6,7 +6,7 @@ A batch is one production run of a product, e.g. "Hazy Pale Ale, Brew 214". It h
 
 1. **Product & dates** (`/batches/new` → `createBatch`): pick the product. The number is pre-filled with the next one for that product. Then enter the made date (and time, if the template needs one) and the packaged date if the template has one. On create:
    - the **lots** are copied from the previous batch of the same product (`defaultLotsFor`);
-   - the **journey stops** are copied too, without their dates (`defaultStopsFor`). A product's first batch starts from the template's default stops, with the producer's own place (`ownStopType`) filled in from the brand profile.
+   - the **journey stops** are copied too, without their dates (`defaultStopsFor`). A product's first batch starts with one stop, the producer's own place (`ownStopType`), filled in from the brand profile. The Journey page adds more with "Add another address" and removes them with "Remove".
 2. **Lots** (`/batches/{id}/lots` → `saveLots`): check or change the supplier, what came from them and the lot number. Spare rows add more, and blank rows are ignored.
 3. **Print** (`/batches/{id}/print`): the QR code, downloads (A4 sticker sheet, PNG, SVG) and the **Publish** button.
 

@@ -189,7 +189,7 @@ Tables marked **(built)** exist in `prisma/schema.prisma`. The others are the ag
 ### Producer creates a batch (built in M3)
 1. `/batches/new` (step 1) posts product, number and dates to `createBatch`.
 2. The action converts the dates from the brand's time zone, validates the industry fields, checks the product belongs to the brand, and finds the product's previous batch.
-3. In one `withTenant` transaction it creates the batch with a fresh random code. Lots are copied from the previous batch, and so are stops (without dates); a product's first batch gets the template's default stops instead.
+3. In one `withTenant` transaction it creates the batch with a fresh random code. Lots are copied from the previous batch, and so are stops (without dates); a product's first batch gets one stop instead, the producer's own place.
 4. It redirects to `/batches/{id}/lots` (step 2). `saveLots` replaces the lots, accepting only the brand's own suppliers.
 5. It redirects to `/batches/{id}/print` (step 3): the QR code from `/batches/{id}/qr?format=…`, plus **Publish**.
 6. `changeBatchStatus` re-checks `publishProblems` on the server before setting `LIVE` and `published_at`.

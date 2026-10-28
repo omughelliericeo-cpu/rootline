@@ -38,8 +38,9 @@ type OwnPlace = { name: string; location: string; latitude: number | null; longi
 
 /**
  * Journey stops for a new batch: the previous batch's stops (without dates),
- * or, for a product's first batch, the template's default stop types, with
- * the producer's own place filled in from the brand profile.
+ * or, for a product's first batch, one stop: the producer's own place, filled
+ * in from the brand profile. More are added with "Add another address"; the
+ * template's stop types are the choices for each stop's type.
  */
 export function defaultStopsFor(
   previousStops: StopDraft[],
@@ -48,18 +49,17 @@ export function defaultStopsFor(
 ): StopDraft[] {
   // Dates belong to one batch's trip, so they are not copied.
   if (previousStops.length > 0) return previousStops.map((stop) => ({ ...stop, arrivedOn: null }));
-  return template.defaultStopTypes.map((stopType) => {
-    const isOwnPlace = stopType.id === template.ownStopType;
-    return {
-      name: isOwnPlace ? brand.name : stopType.label,
-      type: stopType.id,
-      address: isOwnPlace ? brand.location : "",
-      latitude: isOwnPlace ? brand.latitude : null,
-      longitude: isOwnPlace ? brand.longitude : null,
+  return [
+    {
+      name: brand.name,
+      type: template.ownStopType,
+      address: brand.location,
+      latitude: brand.latitude,
+      longitude: brand.longitude,
       arrivedOn: null,
       note: null,
-    };
-  });
+    },
+  ];
 }
 
 type PublishCheck = {
